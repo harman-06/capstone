@@ -1,7 +1,7 @@
 import { ROLES, session } from '../roles.js';
 import { widgets } from '../widgets.js';
 
-const HOVER_EXPAND = false;   // final version: true
+const HOVER_EXPAND = false;   // in the final version: true
 let onScroll;
 
 export function dashboard(el) {
