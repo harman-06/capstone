@@ -31,6 +31,13 @@ a.row:hover{color:var(--brand)}
 .w-greeting,.w-patients,.w-myHealth{grid-column:1/-1}
 .w-notifications:last-child{grid-column:1/-1}
 
+#clock{font-size:14px;color:var(--muted);white-space:nowrap;opacity:0;transform:translateY(-4px);transition:opacity .25s,transform .25s}
+body.clock-visible #clock{opacity:1;transform:none}
+
+.greeting-bar{--p:0;position:sticky;top:53px;z-index:3;background:var(--bg);padding:4px 0 8px;margin-bottom:8px}
+.greeting-bar h1{margin:0;font-size:calc(36px - 16px * var(--p));line-height:1.15}
+.greeting-bar p{margin:0;overflow:hidden;opacity:calc(1 - var(--p) * 1.6);max-height:calc(24px * (1 - var(--p)))}
+
 /* expandable panels (Patients / My Health) */
 .expand-toggle{all:unset;cursor:pointer;display:flex;justify-content:space-between;width:100%;font-weight:600}
 .chev{transition:transform .3s}
