@@ -22,10 +22,11 @@ h1{margin:0 0 4px;font-size:26px}h3{margin:0 0 6px}
 .row:first-of-type{border-top:0}
 a.row:hover{color:var(--brand)}
 .more{display:inline-block;margin-top:8px}
+
 /* STEP 4: dashboard */
 .dash{display:grid;grid-template-columns:3fr 2fr;gap:12px}
 .dash .card{margin:0;padding:12px 14px}
-.w-notifications .card{max-height:220px;overflow:auto}
+.w-notifications .card{max-height:260px;overflow:auto}
 .w-notifications .row{padding:5px 0;font-size:14px}
 .w-notifications:last-child{grid-column:1/-1}   /* admin: notifications alone goes full width */
 
