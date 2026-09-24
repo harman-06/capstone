@@ -12,7 +12,7 @@ export const widgets = {
   greeting() {
     const h = new Date().getHours();
     const hello = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
-    const now = new Date().toLocaleString('en-CA', { weekday:'long', month:'long', day:'numeric', hour:'numeric', minute:'2-digit' });
+    const now = new Date().toLocaleString('en-CA', { weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
     return `<h1>${hello}, ${ROLES[session.role].user}</h1><p class="muted">${now}</p>`;
   },
   schedule() {
@@ -20,6 +20,10 @@ export const widgets = {
     const rows = getAppointments().filter(a => isPatient || a.today).slice(0, 4)
       .map(a => `<a class="row" href="#/appointments"><b>${a.when}</b><span>${isPatient ? a.type : a.patientName + ' · ' + a.type}</span></a>`).join('');
     return card(isPatient ? 'Upcoming appointments' : "Today's schedule", rows || '<p class="muted">Nothing scheduled.</p>', '#/appointments', 'View all appointments');
+  },
+  notifications() {
+    const rows = getNotifications().map(n => `<a class="row sev-${n.severity}" href="${n.target}">${n.icon} ${n.text}</a>`).join('');
+    return card('Notifications', rows || '<p class="muted">You\'re all caught up.</p>');
   },
   patients() {
     const rows = getPatients().slice(0, 4).map(p => `<a class="row" href="#/patients/${p.id}">${p.name}<span class="muted">${p.unit}</span></a>`).join('');
@@ -32,8 +36,5 @@ export const widgets = {
       `<p><b>Allergies:</b> ${p.allergies.join(', ') || 'None'}</p><p><b>Diagnoses:</b> ${p.diagnoses.join(', ')}</p>
        <p><b>Medications:</b> ${p.meds.map(m => m.name).join(', ') || 'None'}</p><a class="more" href="#/my-health">View more</a>`);
   },
-  notifications() {
-    const rows = getNotifications().map(n => `<a class="row sev-${n.severity}" href="${n.target}">${n.icon} ${n.text}</a>`).join('');
-    return card('Notifications', rows || '<p class="muted">You\'re all caught up.</p>');
-  },
+  
 };
