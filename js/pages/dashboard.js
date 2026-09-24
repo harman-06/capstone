@@ -12,4 +12,8 @@ export function dashboard(el) {
     btn.onclick = () => btn.setAttribute('aria-expanded', c.classList.toggle('open'));
     if (HOVER_EXPAND) { c.onmouseenter = () => c.classList.add('open'); c.onmouseleave = () => c.classList.remove('open'); }
   });
+  el.querySelectorAll('.notif-group').forEach(g => {
+  const btn = g.querySelector('.notif-toggle');
+  btn.onclick = () => btn.setAttribute('aria-expanded', g.classList.toggle('open'));
+});
 }
