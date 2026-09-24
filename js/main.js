@@ -23,8 +23,15 @@ const app = document.getElementById('app');
 const sw = document.getElementById('role-switcher');
 const who = document.getElementById('user-name');
 
+const clock = document.getElementById('clock');
+const tick = () => clock.textContent = new Date().toLocaleString('en-CA',
+  { weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+tick(); setInterval(tick, 30000);
+
 function onRoute(handler, ctx) {
   app.classList.remove('page-enter'); void app.offsetWidth; app.classList.add('page-enter');
+  document.body.classList.add('clock-visible');   // other pages: clock always shown
+  scrollTo(0, 0);
   handler(app, ctx);
   applyPermissions(app);
   renderNav(ctx.path);
