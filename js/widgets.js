@@ -21,9 +21,14 @@ export const widgets = {
       .map(a => `<a class="row" href="#/appointments"><b>${a.when}</b><span>${isPatient ? a.type : a.patientName + ' · ' + a.type}</span></a>`).join('');
     return card(isPatient ? 'Upcoming appointments' : "Today's schedule", rows || '<p class="muted">Nothing scheduled.</p>', '#/appointments', 'View all appointments');
   },
-  notifications() {
-    const rows = getNotifications().map(n => `<a class="row sev-${n.severity}" href="${n.target}">${n.icon} ${n.text}</a>`).join('');
-    return card('Notifications', rows || '<p class="muted">You\'re all caught up.</p>');
+ notifications() {
+  const rows = getNotifications().map(n => n.children
+    ? `<div class="notif-group sev-${n.severity}">
+         <button class="notif-toggle" aria-expanded="false">${n.icon} ${n.text}<span class="chev">▾</span></button>
+         <div class="notif-sub"><div>${n.children.map(c => `<a class="sub-item" href="${c.target}">${c.text}</a>`).join('')}</div></div>
+       </div>`
+    : `<a class="row sev-${n.severity}" href="${n.target}">${n.icon} ${n.text}</a>`).join('');
+  return card('Notifications', rows || '<p class="muted">You\'re all caught up.</p>');
   },
   patients() {
     const rows = getPatients().slice(0, 4).map(p => `<a class="row" href="#/patients/${p.id}">${p.name}<span class="muted">${p.unit}</span></a>`).join('');
