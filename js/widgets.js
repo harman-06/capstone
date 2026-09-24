@@ -28,8 +28,7 @@ export const widgets = {
          <div class="notif-sub"><div>${n.children.map(c => `<a class="sub-item" href="${c.target}">${c.text}</a>`).join('')}</div></div>
        </div>`
     : `<a class="row sev-${n.severity}" href="${n.target}">${n.icon} ${n.text}</a>`).join('');
-  return card('Notifications', rows || '<p class="muted">You\'re all caught up.</p>');
-  },
+return card('Notifications', `<div class="notif-list">${rows || '<p class="muted">You\'re all caught up.</p>'}</div>`);  },
   patients() {
     const rows = getPatients().slice(0, 4).map(p => `<a class="row" href="#/patients/${p.id}">${p.name}<span class="muted">${p.unit}</span></a>`).join('');
     return expandable('Patients', rows + '<a class="more" href="#/patients">See more</a>');
