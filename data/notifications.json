@@ -1,6 +1,12 @@
-[{"text":"2 approvals pending","icon":"⚠","severity":"warn","target":"#/requests","cap":"transfers.approve"},
+[{"text":"3 approvals pending","icon":"⚠","severity":"warn","cap":"transfers.approve","target":"#/requests",
+  "children":[
+    {"text":"Ventilator transfer: Oncology to Cardiology (E. Brown)","target":"#/requests"},
+    {"text":"Controlled medication: Morphine, Rohan Khan","target":"#/requests"},
+    {"text":"Infusion pump transfer: Cardiology to Emergency","target":"#/requests"}]},
 {"text":"Amlodipine is low in Cardiology","icon":"▼","severity":"warn","target":"#/inventory?tab=medicine&item=MED-021","cap":"inventory.update"},
 {"text":"Your infusion pump request is pending","icon":"↔","severity":"info","target":"#/requests","cap":"transfers.request"},
+{"text":"Insulin is out of stock in Oncology","icon":"⛔","severity":"bad","target":"#/inventory?tab=medicine&item=MED-007","cap":"inventory.update"},
+{"text":"Ventilator due for maintenance","icon":"🔧","severity":"warn","target":"#/inventory?tab=equipment&item=EQ-102","cap":"inventory.update"},
 {"text":"Metformin due at 12:00","icon":"💊","severity":"info","target":"#/my-health","cap":"profile.own"},
 {"text":"Refill ready: Metformin","icon":"🔁","severity":"info","target":"#/my-health","cap":"profile.own"},
 {"text":"1 account needs a role","icon":"👤","severity":"warn","target":"#/users","cap":"users.manage"}]
