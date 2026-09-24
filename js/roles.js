@@ -1,9 +1,9 @@
 // STEP 2: roles and permissions. New role = one new entry below.
 const CLINICAL = ['appointments.view','patients.view','inventory.view','inventory.update','requests.view'];
-const STAFF_DASH = ['greeting','schedule','patients','notifications'];
+const STAFF_DASH = ['greeting','schedule','notifications','patients'];
 
 export const ROLES = {
-  doctor:      { label:'Doctor', user:'Dr. Singh', scope:'all', dashboard:STAFF_DASH,
+  doctor:      { label:'Doctor', user:'Dr. Smith', scope:'all', dashboard:STAFF_DASH,
                  caps:[...CLINICAL,'patients.viewSensitive','meds.prescribe','transfers.request','transfers.approve'] },
   chargeNurse: { label:'Charge nurse', user:'Nadia Ali', scope:'unit', dashboard:STAFF_DASH,
                  caps:[...CLINICAL,'transfers.request','transfers.approve'],
@@ -13,8 +13,8 @@ export const ROLES = {
                  approval:['meds.administerControlled'], masked:['patients.viewSensitive'] },
   admin:       { label:'IT admin', user:'Sam Lee', scope:'none', dashboard:['greeting','notifications'],
                  caps:['inventory.view','users.manage'] },
-  patient:     { label:'Patient', user:'Rohan Khan', scope:'self', patientId:'p1',
-                 dashboard:['greeting','schedule','myHealth','notifications'],
+  patient:     { label:'Patient', user:'Ron Simpson', scope:'self', patientId:'p1',
+                 dashboard:['greeting','schedule','notifications','myHealth'],
                  caps:['appointments.view','profile.own','patients.viewSensitive'] },
 };
 // scope: all | unit | self | none  (resident, student, aide: add entries the same way)
