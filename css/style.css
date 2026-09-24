@@ -12,7 +12,7 @@ body.nav-closed #sidebar{margin-left:-210px}
 #sidebar a{padding:9px 12px;border-radius:8px;color:var(--ink);text-decoration:none;transition:background .15s}
 #sidebar a:hover{background:var(--bg)}
 #sidebar a.active{background:var(--tint);color:var(--brand);font-weight:600}
-main{flex:1;min-width:0;padding:24px;max-width:1100px}
+main{flex:1;min-width:0;padding:24px;max-width:1200px}
 .page-enter{animation:in .3s ease}
 @keyframes in{from{opacity:0;transform:translateY(6px)}}
 h1{margin:0 0 4px;font-size:26px}h3{margin:0 0 6px}
@@ -23,8 +23,19 @@ h1{margin:0 0 4px;font-size:26px}h3{margin:0 0 6px}
 a.row:hover{color:var(--brand)}
 .more{display:inline-block;margin-top:8px}
 /* STEP 4: dashboard */
-.dash{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
-.dash .card{margin:0}
+.dash{display:grid;grid-template-columns:3fr 2fr;gap:12px}
+.dash .card{margin:0;padding:12px 14px}
+.w-notifications .card{max-height:220px;overflow:auto}
+.w-notifications .row{padding:5px 0;font-size:14px}
+.w-notifications:last-child{grid-column:1/-1}   /* admin: notifications alone goes full width */
+
+/* longer Patients bar: rows flow across in columns when expanded */
+.w-patients .expand-body>div{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));column-gap:24px}
+.w-patients .row{border-top:0;border-bottom:1px solid var(--line)}
+.w-patients .more{grid-column:1/-1}
+
+@media(max-width:760px){.dash{grid-template-columns:1fr}}
+
 .w-greeting,.w-patients,.w-myHealth{grid-column:1/-1}
 .expand-toggle{all:unset;cursor:pointer;display:flex;justify-content:space-between;width:100%;font-weight:600}
 .chev{transition:transform .3s}.open .chev{transform:rotate(180deg)}
