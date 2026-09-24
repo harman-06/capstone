@@ -50,9 +50,9 @@ body.clock-visible #clock{opacity:1;transform:none}
 .w-patients .more{grid-column:1/-1}
 
 /* notifications */
-.w-notifications .card{padding:16px 18px}
+.w-notifications .card{padding:12px 18px}
 .w-notifications .row{padding:8px 0;font-size:15px}
-.notif-list{max-height:170px;overflow-y:auto;overflow-x:hidden;padding-right:6px;scrollbar-width:thin;scrollbar-color:#9aa9b8 var(--line)}
+.notif-list{max-height:150px;overflow-y:auto;overflow-x:hidden;padding-right:6px;scrollbar-width:thin;scrollbar-color:#9aa9b8 var(--line)}
 .notif-toggle{all:unset;cursor:pointer;display:flex;justify-content:space-between;width:100%;box-sizing:border-box;padding:8px 0;border-top:1px solid var(--line);font-size:15px;overflow-wrap:anywhere}
 .notif-group:first-child .notif-toggle{border-top:0}
 .notif-sub{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
