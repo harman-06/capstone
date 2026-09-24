@@ -1,6 +1,6 @@
 // STEP 4: dashboard widgets. Each returns an HTML string. Add one, then list it in a role's `dashboard`.
 import { ROLES, session } from './roles.js';
-import { getAppointments, getPatients, getNotifications } from './data.js';
+import { getAppointments, getNotifications, getPatients } from './data.js';
 
 const card = (title, body, href, link) =>
   `<section class="card"><h3>${title}</h3>${body}${href ? `<a class="more" href="${href}">${link}</a>` : ''}</section>`;
