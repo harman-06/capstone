@@ -1,0 +1,47 @@
+/* STEP 1: shell styles. Change the tokens first, everything follows. */
+:root{--bg:#f3f6f8;--surface:#fff;--ink:#17232e;--muted:#66788a;--brand:#0e6f74;--tint:#d5eef0;--line:#e1e7ec;--ok:#15803d;--warn:#b45309;--bad:#b42318;--r:12px}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+a{color:var(--brand)}
+.topbar{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.brand{font-weight:700;text-decoration:none}.spacer{flex:1}
+#menu-btn{border:0;background:none;font-size:20px;cursor:pointer}
+.layout{display:flex;min-height:calc(100vh - 53px)}
+#sidebar{width:210px;flex:none;padding:16px 10px;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;transition:margin .25s}
+body.nav-closed #sidebar{margin-left:-210px}
+#sidebar a{padding:9px 12px;border-radius:8px;color:var(--ink);text-decoration:none;transition:background .15s}
+#sidebar a:hover{background:var(--bg)}
+#sidebar a.active{background:var(--tint);color:var(--brand);font-weight:600}
+main{flex:1;min-width:0;padding:24px;max-width:1100px}
+.page-enter{animation:in .3s ease}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+h1{margin:0 0 4px;font-size:26px}h3{margin:0 0 6px}
+.muted{color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:16px}
+.row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);color:inherit;text-decoration:none}
+.row:first-of-type{border-top:0}
+a.row:hover{color:var(--brand)}
+.more{display:inline-block;margin-top:8px}
+/* STEP 4: dashboard */
+.dash{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.dash .card{margin:0}
+.w-greeting,.w-patients,.w-myHealth{grid-column:1/-1}
+.expand-toggle{all:unset;cursor:pointer;display:flex;justify-content:space-between;width:100%;font-weight:600}
+.chev{transition:transform .3s}.open .chev{transform:rotate(180deg)}
+.expand-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
+.expand-body>div{overflow:hidden}
+.open .expand-body{grid-template-rows:1fr}
+.sev-warn{color:var(--warn)}.sev-bad{color:var(--bad)}
+/* STEP 2 helpers + STEP 5 pages */
+.locked{opacity:.55;cursor:not-allowed}.locked::after{content:" 🔒"}
+.masked{letter-spacing:2px;color:var(--muted)}
+.banner{background:#fdecea;color:var(--bad);border-radius:var(--r);padding:10px 14px;margin-bottom:16px;font-weight:600}
+.tabs{display:flex;gap:6px;margin:12px 0}
+.tabs a{padding:6px 14px;border-radius:99px;text-decoration:none;color:var(--ink)}.tabs a.on{background:var(--brand);color:#fff}
+table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:8px;border-top:1px solid var(--line)}
+tr.hl{background:#fff7d6}
+.badge{padding:2px 10px;border-radius:99px;font-size:13px;background:var(--line)}
+.badge.available{background:#dcfce7;color:var(--ok)}.badge.low{background:#fef3c7;color:var(--warn)}.badge.out{background:#fee2e2;color:var(--bad)}
+button{font:inherit;padding:5px 12px;border-radius:8px;border:1px solid var(--brand);background:var(--surface);color:var(--brand);cursor:pointer}
+@media(max-width:760px){body{--w:0}#sidebar{position:fixed;top:53px;bottom:0;z-index:4}main{padding:16px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

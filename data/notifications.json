@@ -1,0 +1,6 @@
+[{"text":"2 approvals pending","icon":"⚠","severity":"warn","target":"#/requests","cap":"transfers.approve"},
+{"text":"Amlodipine is low in Cardiology","icon":"▼","severity":"warn","target":"#/inventory?tab=medicine&item=MED-021","cap":"inventory.update"},
+{"text":"Your infusion pump request is pending","icon":"↔","severity":"info","target":"#/requests","cap":"transfers.request"},
+{"text":"Metformin due at 12:00","icon":"💊","severity":"info","target":"#/my-health","cap":"profile.own"},
+{"text":"Refill ready: Metformin","icon":"🔁","severity":"info","target":"#/my-health","cap":"profile.own"},
+{"text":"1 account needs a role","icon":"👤","severity":"warn","target":"#/users","cap":"users.manage"}]

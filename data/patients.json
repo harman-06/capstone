@@ -1,0 +1,4 @@
+[{"id":"p1","name":"Rohan Khan","age":54,"unit":"Cardiology","allergies":["Penicillin"],"diagnoses":["Type 2 diabetes"],"meds":[{"name":"Metformin","itemId":"MED-014"}]},
+{"id":"p2","name":"Mia Lee","age":37,"unit":"Cardiology","allergies":[],"diagnoses":["Hypertension"],"meds":[{"name":"Amlodipine","itemId":"MED-021"}]},
+{"id":"p3","name":"Tomas Ortiz","age":68,"unit":"Oncology","allergies":["Latex"],"diagnoses":["Pre-op assessment"],"meds":[{"name":"Insulin","itemId":"MED-007"}]},
+{"id":"p4","name":"Aisha Noor","age":29,"unit":"Emergency","allergies":[],"diagnoses":["Wrist fracture"],"meds":[]}]

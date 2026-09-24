@@ -1,0 +1,6 @@
+[{"id":"EQ-101","name":"Infusion pump","type":"equipment","unit":"Cardiology","qty":4,"status":"available"},
+{"id":"EQ-102","name":"Ventilator","type":"equipment","unit":"Oncology","qty":1,"status":"low"},
+{"id":"EQ-103","name":"Defibrillator","type":"equipment","unit":"Emergency","qty":2,"status":"available"},
+{"id":"MED-014","name":"Metformin","type":"medicine","unit":"Cardiology","qty":120,"status":"available"},
+{"id":"MED-021","name":"Amlodipine","type":"medicine","unit":"Cardiology","qty":15,"status":"low"},
+{"id":"MED-007","name":"Insulin","type":"medicine","unit":"Oncology","qty":0,"status":"out"}]
