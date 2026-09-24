@@ -1,5 +1,4 @@
 # Nexora Health: sprint 1 template
-Run locally (modules and fetch need a server): `python -m http.server 8000`, then open http://localhost:8000
 GitHub Pages: push, then Settings > Pages > deploy from branch.
 
 Build order (files grouped by step):
