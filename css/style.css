@@ -25,30 +25,37 @@ a.row:hover{color:var(--brand)}
 
 /* STEP 4: dashboard */
 .dash{display:grid;grid-template-columns:5fr 4fr;gap:12px}
+.dash>div{min-width:0}
 .dash .card{margin:0;padding:12px 14px}
-.w-notifications .card{max-height:380px;display:flex;flex-direction:column;padding:16px 18px}
-.notif-list{flex:1;min-height:0;overflow-y:auto;padding-right:6px;scrollbar-width:thin;scrollbar-color:#9aa9b8 var(--line)}
-.notif-toggle{all:unset;cursor:pointer;display:flex;justify-content:space-between;width:100%;box-sizing:border-box;padding:8px 0;border-top:1px solid var(--line);font-size:15px}
-.notif-group:first-child .notif-toggle{border-top:0}
-.notif-sub{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
-.notif-sub>div{overflow:hidden}
-.notif-group.open .notif-sub{grid-template-rows:1fr}
-.sub-item{display:block;background:var(--bg);border-radius:10px;padding:6px 12px;margin:4px 0;font-size:14px;color:var(--ink);text-decoration:none}
-.sub-item:hover{color:var(--brand)}
-/* longer Patients bar: rows flow across in columns when expanded */
+.w-greeting,.w-patients,.w-myHealth{grid-column:1/-1}
+.w-notifications:last-child{grid-column:1/-1}
+
+/* expandable panels (Patients / My Health) */
+.expand-toggle{all:unset;cursor:pointer;display:flex;justify-content:space-between;width:100%;font-weight:600}
+.chev{transition:transform .3s}
+.open .chev{transform:rotate(180deg)}
+.expand-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
+.expand-body>div{overflow:hidden}
+.open .expand-body{grid-template-rows:1fr}
 .w-patients .expand-body>div{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));column-gap:24px}
 .w-patients .row{border-top:0;border-bottom:1px solid var(--line)}
 .w-patients .more{grid-column:1/-1}
 
+/* notifications */
+.w-notifications .card{padding:16px 18px}
+.w-notifications .row{padding:8px 0;font-size:15px}
+.notif-list{max-height:240px;overflow-y:auto;overflow-x:hidden;padding-right:6px;scrollbar-width:thin;scrollbar-color:#9aa9b8 var(--line)}
+.notif-toggle{all:unset;cursor:pointer;display:flex;justify-content:space-between;width:100%;box-sizing:border-box;padding:8px 0;border-top:1px solid var(--line);font-size:15px;overflow-wrap:anywhere}
+.notif-group:first-child .notif-toggle{border-top:0}
+.notif-sub{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
+.notif-sub>div{overflow:hidden}
+.notif-group.open .notif-sub{grid-template-rows:1fr}
+.sub-item{display:block;background:var(--bg);border-radius:10px;padding:6px 12px;margin:4px 0;font-size:14px;color:var(--ink);text-decoration:none;overflow-wrap:anywhere}
+.sub-item:hover{color:var(--brand)}
+.sev-warn{color:var(--warn)}.sev-bad{color:var(--bad)}
+
 @media(max-width:760px){.dash{grid-template-columns:1fr}}
 
-.w-greeting,.w-patients,.w-myHealth{grid-column:1/-1}
-.expand-toggle{all:unset;cursor:pointer;display:flex;justify-content:space-between;width:100%;font-weight:600}
-.chev{transition:transform .3s}.open .chev{transform:rotate(180deg)}
-.expand-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
-.expand-body>div{overflow:hidden}
-.open .expand-body{grid-template-rows:1fr}
-.sev-warn{color:var(--warn)}.sev-bad{color:var(--bad)}
 /* STEP 2 helpers + STEP 5 pages */
 .locked{opacity:.55;cursor:not-allowed}.locked::after{content:" 🔒"}
 .masked{letter-spacing:2px;color:var(--muted)}
