@@ -26,9 +26,8 @@ a.row:hover{color:var(--brand)}
 /* STEP 4: dashboard */
 .dash{display:grid;grid-template-columns:5fr 4fr;gap:12px}
 .dash .card{margin:0;padding:12px 14px}
-.w-notifications .card{max-height:400px;overflow-y:auto;padding:16px 18px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
-.w-notifications .row{padding:6px 0;font-size:14px}
-.w-notifications:last-child{grid-column:1/-1}   /* admin: notifications alone goes full width */
+.w-notifications .card{max-height:380px;display:flex;flex-direction:column;padding:16px 18px}
+.notif-list{flex:1;min-height:0;overflow-y:auto;padding-right:6px;scrollbar-width:thin;scrollbar-color:#9aa9b8 var(--line)}
 .notif-toggle{all:unset;cursor:pointer;display:flex;justify-content:space-between;width:100%;box-sizing:border-box;padding:8px 0;border-top:1px solid var(--line);font-size:15px}
 .notif-group:first-child .notif-toggle{border-top:0}
 .notif-sub{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
