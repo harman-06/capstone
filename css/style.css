@@ -1,5 +1,6 @@
 /* STEP 1: shell styles. Change the tokens first, everything follows. */
-:root{--bg:#e8e5e1;--surface:#faf4ed;--ink:#17232e;--muted:#66788a;--brand:#0e6f74;--tint:#d5dfe0;--line:#e1e7ec;--ok:#15803d;--warn:#b45309;--bad:#b42318;--r:12px}
+:root{--bg:#faf2e8;--surface:#ebe3da;--ink:#17232e;--muted:#66788a;--brand:#0e6f74;--tint:#d5dfe0;--line:#e1e7ec;--ok:#15803d;--warn:#b45309;--bad:#b42318;--r:12px}
+/* surface includes the sidebar, top and cards. */
 *{box-sizing:border-box}
 body{margin:0;font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--ink)}
 a{color:var(--brand)}
