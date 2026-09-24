@@ -1,5 +1,5 @@
 /* STEP 1: shell styles. Change the tokens first, everything follows. */
-:root{--bg:#cadbe0;--surface:#f2efeb;--ink:#17232e;--muted:#66788a;--brand:#0e6f74;--tint:#b3bcbd;--line:#e1e7ec;--ok:#15803d;--warn:#b45309;--bad:#b42318;--r:12px}
+:root{--bg:#ebe3da;--surface:#f2efeb;--ink:#17232e;--muted:#66788a;--brand:#0e6f74;--tint:#d5dfe0;--line:#e1e7ec;--ok:#15803d;--warn:#b45309;--bad:#b42318;--r:12px}
 *{box-sizing:border-box}
 body{margin:0;font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--ink)}
 a{color:var(--brand)}
@@ -26,7 +26,7 @@ a.row:hover{color:var(--brand)}
 /* STEP 4: dashboard */
 .dash{display:grid;grid-template-columns:5fr 4fr;gap:12px}
 .dash .card{margin:0;padding:12px 14px}
-.w-notifications .card{max-height:320px;overflow:auto;padding:16px 18px}
+.w-notifications .card{max-height:350px;overflow:auto;padding:16px 18px}
 .w-notifications .row{padding:8px 0;font-size:15px}
 .w-notifications:last-child{grid-column:1/-1}   /* admin: notifications alone goes full width */
 
