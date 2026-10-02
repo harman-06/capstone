@@ -4,6 +4,7 @@ import { loadData } from './data.js';
 import { startRouter } from './router.js';
 import { renderNav } from './nav.js';
 import { dashboard } from './pages/dashboard.js';
+import { units } from './pages/units.js';
 import * as pg from './pages/other.js';
 
 const routes = [
@@ -13,6 +14,7 @@ const routes = [
   [/^\/patients\/(\w+)$/, pg.patientProfile],
   [/^\/my-health$/, pg.myHealth],
   [/^\/inventory$/, pg.inventory],
+  [/^\/units$/, units],
   [/^\/requests$/, pg.requests],
   [/^\/users$/, pg.users],
   [/^\/help$/, pg.help],
