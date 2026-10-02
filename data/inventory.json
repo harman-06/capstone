@@ -1,6 +1,14 @@
-[{"id":"EQ-101","name":"Infusion pump","type":"equipment","unit":"Cardiology","qty":4,"status":"available"},
-{"id":"EQ-102","name":"Ventilator","type":"equipment","unit":"Oncology","qty":1,"status":"low"},
-{"id":"EQ-103","name":"Defibrillator","type":"equipment","unit":"Emergency","qty":2,"status":"available"},
-{"id":"MED-014","name":"Metformin","type":"medicine","unit":"Cardiology","qty":120,"status":"available"},
-{"id":"MED-021","name":"Amlodipine","type":"medicine","unit":"Cardiology","qty":15,"status":"low"},
-{"id":"MED-007","name":"Insulin","type":"medicine","unit":"Oncology","qty":0,"status":"out"}]
+[
+  {"id":"EQ-101","name":"Infusion pump","type":"equipment","unit":"Cardiology","unitNo":"3A","qty":4,"status":"available"},
+  {"id":"EQ-102","name":"Ventilator","type":"equipment","unit":"Oncology","unitNo":"5B","qty":1,"status":"low"},
+  {"id":"EQ-103","name":"Defibrillator","type":"equipment","unit":"Emergency","unitNo":"ER1","qty":2,"status":"available"},
+  {"id":"EQ-104","name":"Wheelchair","type":"equipment","unit":"Emergency","unitNo":"ER1","qty":6,"status":"available"},
+  {"id":"EQ-105","name":"Patient monitor","type":"equipment","unit":"Cardiology","unitNo":"3A","qty":1,"status":"low"},
+  {"id":"EQ-106","name":"Oxygen concentrator","type":"equipment","unit":"Oncology","unitNo":"5B","qty":3,"status":"available"},
+  {"id":"MED-014","name":"Metformin","type":"medicine","unit":"Cardiology","unitNo":"3A","qty":120,"status":"available"},
+  {"id":"MED-021","name":"Amlodipine","type":"medicine","unit":"Cardiology","unitNo":"3A","qty":15,"status":"low"},
+  {"id":"MED-007","name":"Insulin","type":"medicine","unit":"Oncology","unitNo":"5B","qty":0,"status":"out"},
+  {"id":"MED-032","name":"Acetaminophen","type":"medicine","unit":"Emergency","unitNo":"ER1","qty":200,"status":"available"},
+  {"id":"MED-040","name":"Ondansetron","type":"medicine","unit":"Oncology","unitNo":"5B","qty":8,"status":"low"},
+  {"id":"MED-052","name":"Heparin","type":"medicine","unit":"Cardiology","unitNo":"3A","qty":0,"status":"out"}
+]
