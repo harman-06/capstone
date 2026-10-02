@@ -6,6 +6,7 @@ const NAV = [
   { label:'Patients',     route:'/patients',     cap:'patients.view' },
   { label:'My Health',    route:'/my-health',    cap:'profile.own' },
   { label:'Inventory',    route:'/inventory',    cap:'inventory.view' },
+  { label:'Units',        route:'/units',        cap:'inventory.view' },
   { label:'Requests',     route:'/requests',     cap:'requests.view' },
   { label:'Users',        route:'/users',        cap:'users.manage' },
   { label:'Help',         route:'/help' },
