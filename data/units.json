@@ -1,0 +1,5 @@
+[
+  {"id":"u1","number":"3A","name":"Cardiology","floor":3},
+  {"id":"u2","number":"5B","name":"Oncology","floor":5},
+  {"id":"u3","number":"ER1","name":"Emergency","floor":1}
+]

@@ -3,7 +3,7 @@
 import { ROLES, session, can } from './roles.js';
 const db = {};
 export async function loadData() {
-  for (const f of ['patients','appointments','inventory','notifications'])
+    for (const f of ['patients','appointments','inventory','notifications','units'])
     db[f] = await (await fetch(`data/${f}.json`)).json();
 }
 function scoped(list) {
@@ -18,3 +18,4 @@ export const getPatient = id => getPatients().find(p => p.id === id);
 export const getAppointments = patientId => scoped(db.appointments).filter(a => !patientId || a.patientId === patientId);
 export const getInventory = () => db.inventory;                        // hospital-wide on purpose
 export const getNotifications = () => db.notifications.filter(n => can(n.cap) === 'allow');
+export const getUnits = () => db.units;
