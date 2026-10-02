@@ -32,7 +32,7 @@ export const myHealth = el => patientProfile(el, { params: [getPatients()[0]?.id
 export function inventory(el, { query }) {
   const tab = query.tab || 'equipment';
   const rows = getInventory().filter(i => i.type === tab).map(i => `<tr class="${i.id === query.item ? 'hl' : ''}">
-    <td>${i.name}</td><td>${i.unit}</td><td>${i.qty}</td><td><span class="badge ${i.status}">${i.status}</span></td>
+    <td>${i.name}</td><td>${i.unit}${i.unitNo ? ` <span class="muted">(${i.unitNo})</span>` : ''}</td><td>${i.qty}</td><td><span class="badge ${i.status}">${i.status}</span></td>
     <td>${i.unit !== session.unit ? '<button data-cap="transfers.request">Request</button>' : ''}</td></tr>`).join('');
   el.innerHTML = page('Inventory', `<div class="tabs"><a class="${tab === 'equipment' ? 'on' : ''}" href="#/inventory?tab=equipment">Equipment</a><a class="${tab === 'medicine' ? 'on' : ''}" href="#/inventory?tab=medicine">Medicine</a></div>
     <div class="card"><table><tr><th>Item</th><th>Unit</th><th>Qty</th><th>Status</th><th></th></tr>${rows}</table></div>`);
