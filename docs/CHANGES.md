@@ -1,0 +1,15 @@
+# Lean v3 corrections
+- All 15 public tables have row-level security and explicit browser grants.
+- Anonymous access is denied. Active public.users membership is required for inventory reads.
+- Views run as the caller; private views are not granted to browsers.
+- Workflow function execution is revoked from PUBLIC/anon/authenticated. Trusted SQL-only functions validate active scoped actors, approval policies, source/availability and transition order.
+- Asset row locks plus a partial unique index protect reservations; validation checks competing requests. True concurrent-session stress tests have not been run.
+- Added request/cancel functions and audit records for every transfer event.
+- Inventory IDs include department and full category UUID, avoiding collisions across units.
+- Zero-stock combinations are based on configured thresholds; missing asset categories now appear as out.
+- NULL category approval policies deduplicate on repeated seed execution.
+- Hierarchy trigger rejects invalid parents/cycles.
+- Correct publishable-key headers and actual staff sign-in; tokens remain in memory and are never printed or stored in config.
+- Configured connection errors clear equipment instead of silently falling back. Unconfigured demo mode remains explicit; medicine demo inventory is preserved.
+- Removed duplicated role-switcher element ID.
+- Database schema setup refuses existing tables. No DROP, TRUNCATE, reset, or deletion migration is included.
