@@ -2,6 +2,6 @@
   "name": "nexora-health-lean-v3",
   "private": true,
   "type": "module",
-  "scripts": { "test": "node tests/database.mjs && node --test tests/frontend.test.mjs" },
+  "scripts": { "test": "node tests/database.mjs && node --test tests/*.test.mjs" },
   "devDependencies": { "@electric-sql/pglite": "0.5.8" }
 }

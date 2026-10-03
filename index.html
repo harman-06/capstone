@@ -6,27 +6,31 @@
 <title>Nexora Health</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-<header class="topbar">
+<body class="signed-out">
+<header class="topbar" data-auth-required hidden>
   <button id="menu-btn" aria-label="Toggle menu">☰</button>
-  <a class="brand" href="#/dashboard">Nexora Health</a>
+  <a class="brand" href="#/dashboard"><span class="brand-mark" aria-hidden="true">+</span> Nexora <span class="brand-light">Health</span></a>
   <span class="spacer"></span>
   <span id="clock"></span>
-  <label>Demo role <select id="role-switcher"></select></label>
-  <span id="user-name"></span>
+  <label class="role-label">Preview role <select id="role-switcher"></select></label>
+  <span id="user-name" class="user-chip"></span>
 </header>
 <section id="database-controls" class="database-controls" aria-label="Database connection">
-  <p id="database-status" role="status">Loading data…</p>
+  <div class="signin-brand"><span class="brand-mark" aria-hidden="true">+</span><span>Nexora <b>Health</b></span><small>STAFF WORKSPACE</small></div>
+  <div class="signin-welcome"><span class="eyebrow">CARE OPERATIONS, CONNECTED</span><h2>A clearer view.<br>A better working day.</h2><p>Your workspace for equipment, units and care coordination.</p><div class="signin-feature"><span aria-hidden="true">01</span> Find equipment across units</div><div class="signin-feature"><span aria-hidden="true">02</span> Check availability at a glance</div><div class="signin-feature"><span aria-hidden="true">03</span> Navigate with confidence</div><small>CAPSTONE DEMONSTRATION · SYNTHETIC DATA</small></div>
+  <h1 id="signin-heading">Welcome back</h1>
+  <p id="signin-intro">Enter your staff credentials to open your workspace.</p>
+  <p id="database-status" role="status">Sign in to continue.</p>
   <form id="database-signin">
     <label>Staff email <input name="email" type="email" autocomplete="username" required></label>
     <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
-    <button type="submit">Sign in to database</button>
+    <button type="submit">Sign in to workspace <span aria-hidden="true">→</span></button>
   </form>
   <button id="database-signout" hidden>Sign out</button>
-  <button id="database-refresh">Refresh equipment</button>
+  <button id="database-refresh" hidden>Refresh equipment</button>
   <p id="database-auth-message" role="status"></p>
 </section>
-<div class="layout">
+<div class="layout" data-auth-required hidden>
   <nav id="sidebar" aria-label="Main"></nav>
   <main id="app"></main>
 </div>
@@ -34,4 +38,3 @@
 <script type="module" src="js/main.js"></script>
 </body>
 </html>
-
