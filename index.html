@@ -13,14 +13,25 @@
   <span class="spacer"></span>
   <span id="clock"></span>
   <label>Demo role <select id="role-switcher"></select></label>
-  <span class="spacer"></span>
-  <label>Demo role <select id="role-switcher"></select></label>
   <span id="user-name"></span>
 </header>
+<section id="database-controls" class="database-controls" aria-label="Database connection">
+  <p id="database-status" role="status">Loading data…</p>
+  <form id="database-signin">
+    <label>Staff email <input name="email" type="email" autocomplete="username" required></label>
+    <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
+    <button type="submit">Sign in to database</button>
+  </form>
+  <button id="database-signout" hidden>Sign out</button>
+  <button id="database-refresh">Refresh equipment</button>
+  <p id="database-auth-message" role="status"></p>
+</section>
 <div class="layout">
   <nav id="sidebar" aria-label="Main"></nav>
   <main id="app"></main>
 </div>
+<script src="js/config.js"></script>
 <script type="module" src="js/main.js"></script>
 </body>
 </html>
+
