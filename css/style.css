@@ -77,3 +77,10 @@ tr.hl{background:#fff7d6}
 button{font:inherit;padding:5px 12px;border-radius:8px;border:1px solid var(--brand);background:var(--surface);color:var(--brand);cursor:pointer}
 @media(max-width:760px){body{--w:0}#sidebar{position:fixed;top:53px;bottom:0;z-index:4}main{padding:16px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+
+.database-controls { margin: 12px 20px; padding: 12px; border: 1px solid #ccc; border-radius: 8px; }
+.database-controls p { margin: 4px 0 10px; }
+.database-controls form { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.database-controls label { display: grid; gap: 4px; }
+.database-controls [hidden] { display: none; }
