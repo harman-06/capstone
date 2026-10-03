@@ -1,5 +1,5 @@
 /* STEP 1: shell styles. Change the tokens first, everything follows. */
-:root{--bg:#faf2e8;--surface:#ebe3da;--ink:#17232e;--muted:#66788a;--brand:#0e6f74;--tint:#d5dfe0;--line:#e1e7ec;--ok:#15803d;--warn:#b45309;--bad:#b42318;--r:12px}
+:root{--bg:#f3f6f9;--surface:#ffffff;--ink:#172b3a;--muted:#647687;--brand:#086d73;--tint:#e5f3f2;--line:#dfe7ee;--ok:#15803d;--warn:#b45309;--bad:#b42318;--r:12px}
 /* surface includes the sidebar, top and cards. */
 *{box-sizing:border-box}
 body{margin:0;font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--ink)}
@@ -84,3 +84,85 @@ button{font:inherit;padding:5px 12px;border-radius:8px;border:1px solid var(--br
 .database-controls form { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
 .database-controls label { display: grid; gap: 4px; }
 .database-controls [hidden] { display: none; }
+[data-auth-required][hidden] { display: none !important; }
+body.signed-out .database-controls { width: min(440px, calc(100% - 32px)); box-sizing: border-box; margin: 12vh auto 24px; padding: 28px; background: var(--surface); }
+body.signed-out .database-controls h1 { margin: 0 0 12px; }
+body.signed-out .database-controls form { display: grid; gap: 16px; }
+body.signed-out .database-controls input { width: 100%; box-sizing: border-box; padding: 10px; font: inherit; border: 1px solid var(--line); border-radius: 8px; }
+
+/* Staff workspace: readable hierarchy, clear controls and responsive navigation. */
+[hidden] { display:none !important; }
+body { font-family: Inter, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+:focus-visible { outline:3px solid #49b8c0; outline-offset:3px; }
+button, input, select { font:inherit; }
+button { padding:9px 14px; font-weight:600; transition:background .15s; }
+button:hover { background:var(--tint); }
+button:disabled { opacity:.55; cursor:wait; }
+input, select { border:1px solid #cbd7e1; border-radius:8px; padding:9px 12px; background:#fff; color:var(--ink); }
+.topbar { min-height:72px; padding:12px 28px; gap:20px; }
+.brand { display:flex; align-items:center; gap:8px; font-size:20px; letter-spacing:-.5px; color:var(--ink); }
+.brand-light { font-weight:400; }
+.brand-mark { display:inline-grid; place-items:center; flex:none; width:34px; height:34px; border-radius:10px; background:var(--brand); color:#fff; font-size:30px; font-weight:500; line-height:1; }
+#menu-btn { width:36px; height:36px; padding:0; color:var(--muted); }
+.role-label { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
+.role-label select { font-size:13px; padding:7px 10px; }
+.user-chip { font-size:13px; padding:8px 12px; border-radius:8px; background:var(--bg); font-weight:600; }
+.layout { min-height:calc(100vh - 72px); }
+#sidebar { width:232px; padding:24px 16px; gap:6px; }
+body.nav-closed #sidebar { margin-left:-232px; }
+.nav-caption { font-size:10px; font-weight:700; letter-spacing:1.4px; color:var(--muted); padding:0 12px 12px; }
+#sidebar a { display:flex; align-items:center; gap:12px; font-size:14px; padding:12px; }
+#sidebar a.active { box-shadow:inset 3px 0 var(--brand); }
+.nav-icon { width:18px; height:18px; flex:none; opacity:.8; }
+.nav-footer { margin-top:auto; padding:28px 12px 6px; color:var(--muted); font-size:11px; }
+main { padding:32px; max-width:1500px; }
+h1 { font-size:28px; letter-spacing:-.7px; margin-bottom:12px; }
+h2 { letter-spacing:-.5px; } h3 { font-size:16px; }
+.card { padding:22px; border-radius:14px; box-shadow:0 2px 5px #17304705; overflow:auto; }
+.dash { gap:20px; }
+.dash .card { padding:20px 22px; }
+.greeting-bar { top:72px; margin-bottom:18px; padding:8px 0 16px; }
+.greeting-bar h1 { letter-spacing:-1px; }
+.row { padding:12px 0; align-items:center; }
+.muted { font-size:14px; }
+.tabs { width:fit-content; padding:4px; border:1px solid var(--line); background:#fff; border-radius:10px; margin:20px 0; }
+.tabs a { border-radius:7px; font-size:14px; padding:9px 20px; font-weight:600; }
+th { border-top:0; background:#f6f9fb; font-size:11px; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); white-space:nowrap; }
+td, th { padding:14px 16px; } td { font-size:14px; }
+tbody tr:hover { background:#f7fbfc; }
+td:first-child { font-weight:600; }
+.badge { display:inline-block; font-size:11px; font-weight:700; padding:5px 10px; text-transform:capitalize; white-space:nowrap; }
+.inventory-tools { display:flex; align-items:end; flex-wrap:wrap; gap:16px; margin:20px 0; }
+.inventory-tools label { display:grid; gap:6px; font-size:12px; font-weight:600; }
+.inventory-tools input { min-width:240px; }
+.inventory-tools .muted { margin-left:auto; padding-bottom:8px; }
+.empty-state { text-align:center; padding:28px; color:var(--muted); }
+.database-controls { display:flex; align-items:center; flex-wrap:wrap; gap:12px; padding:12px 28px; margin:0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:#fff; }
+.database-controls p { margin:0; font-size:12px; color:var(--muted); }
+#database-auth-message:empty { display:none; }
+#database-auth-message { flex-basis:100%; }
+.signin-brand, .signin-welcome { display:none; }
+body.signed-out { min-height:100vh; display:grid; place-items:center; background:#eef4f6; padding:32px 16px; }
+body.signed-out .database-controls { display:block; position:relative; width:min(980px,100%); min-height:580px; margin:0; padding:114px 56px 48px 55%; border:1px solid #dae5eb; border-radius:22px; box-shadow:0 18px 60px #17304712; overflow:hidden; }
+body.signed-out .signin-brand { display:flex; align-items:center; gap:10px; position:absolute; left:40px; top:36px; color:#fff; font-size:22px; font-weight:400; z-index:1; }
+.signin-brand .brand-mark { background:#ffffff20; }
+.signin-brand small { font-size:8px; letter-spacing:1.5px; position:absolute; top:40px; left:44px; white-space:nowrap; }
+body.signed-out .signin-welcome { display:block; position:absolute; inset:0 52% 0 0; padding:158px 40px 40px; background:#103c49; color:#fff; }
+.eyebrow { font-size:9px; letter-spacing:2px; font-weight:700; color:#8ed0d1; }
+.signin-welcome h2 { font-size:32px; line-height:1.2; font-weight:600; margin:18px 0; }
+.signin-welcome p { color:#c2d9de; font-size:14px; line-height:1.7; margin-bottom:28px; }
+.signin-feature { display:flex; gap:12px; align-items:center; margin:16px 0; font-size:13px; color:#d7e7eb; }
+.signin-feature span { font-size:10px; color:#8ed0d1; padding:4px 6px; border:1px solid #ffffff20; border-radius:5px; }
+.signin-welcome small { position:absolute; bottom:32px; font-size:8px; letter-spacing:1.2px; color:#92b4bf; }
+body.signed-out .database-controls h1 { font-size:30px; margin-bottom:8px; }
+body.signed-out #signin-intro { font-size:14px; line-height:1.7; margin-bottom:24px; }
+body.signed-out #database-status { color:var(--brand); margin-bottom:18px; font-size:12px; }
+body.signed-out .database-controls form { display:grid; gap:18px; }
+body.signed-out .database-controls label { font-size:12px; font-weight:600; gap:8px; }
+body.signed-out .database-controls input { padding:13px 14px; background:#fafcfd; }
+body.signed-out button[type=submit] { display:flex; justify-content:space-between; background:var(--brand); color:#fff; padding:13px 16px; margin-top:8px; }
+body.signed-out button[type=submit]:hover { background:#07565d; }
+body.signed-out #database-auth-message { margin-top:18px; line-height:1.6; color:var(--bad); }
+@media(max-width:1000px) { #clock { display:none; } .user-chip { display:none; } main { padding:24px; } }
+@media(max-width:760px) { .topbar { min-height:64px; padding:12px 16px; gap:12px; } .brand { font-size:17px; gap:5px; } .brand-mark { width:28px; height:28px; font-size:24px; } .role-label { font-size:0; } .role-label select { max-width:130px; } #sidebar { top:64px; box-shadow:12px 0 30px #17304715; } .greeting-bar { top:64px; } main { padding:20px 16px; } .database-controls { padding:10px 16px; } .inventory-tools .muted { margin-left:0; } td,th { padding:12px; } }
+@media(max-width:640px) { body.signed-out { padding:24px 16px; } body.signed-out .database-controls { min-height:0; padding:116px 28px 36px; border-radius:16px; max-width:440px; } body.signed-out .signin-welcome { display:none; } body.signed-out .signin-brand { top:32px; left:28px; color:var(--ink); font-size:20px; } .signin-brand .brand-mark { background:var(--brand); } .signin-brand small { color:var(--muted); } h1 { font-size:25px; } .inventory-tools input { min-width:0; width:100%; } .inventory-tools label:first-child { width:100%; } }
