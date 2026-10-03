@@ -1,6 +1,7 @@
 // STEP 1: boot file. Wires router, nav, role switcher.
 import { ROLES, session, applyPermissions } from './roles.js';
 import { loadData } from './data.js';
+import { mountDatabaseControls } from './auth-ui.js';
 import { startRouter } from './router.js';
 import { renderNav } from './nav.js';
 import { dashboard } from './pages/dashboard.js';
@@ -42,6 +43,7 @@ function onRoute(handler, ctx) {
 
 await loadData();
 const refresh = startRouter(routes, onRoute);
+mountDatabaseControls(refresh);
 
 sw.innerHTML = Object.entries(ROLES).map(([k, r]) => `<option value="${k}">${r.label}</option>`).join('');
 sw.onchange = () => {
@@ -50,3 +52,4 @@ sw.onchange = () => {
 };
 document.getElementById('menu-btn').onclick = () => document.body.classList.toggle('nav-closed');
 if (innerWidth < 760) document.body.classList.add('nav-closed');
+
