@@ -32,11 +32,28 @@ export const myHealth = el => patientProfile(el, { params: [getPatients()[0]?.id
 
 export function inventory(el, { query }) {
   const tab = query.tab || 'equipment';
-  const rows = getInventory().filter(i => i.type === tab).map(i => `<tr class="${i.id === query.item ? 'hl' : ''}">
+  const rows = getInventory().filter(i => i.type === tab).map(i => `<tr data-inventory-row data-name="${escapeHtml(i.name.toLowerCase())}" data-unit="${escapeHtml(i.unit)}" class="${i.id === query.item ? 'hl' : ''}">
     <td>${i.name}</td><td>${i.unit}${i.unitNo ? ` <span class="muted">(${i.unitNo})</span>` : ''}</td><td>${i.qty}</td><td><span class="badge ${i.status}">${i.status}</span></td>
     <td>${i.unit !== session.unit ? `<button data-cap="transfers.request" data-request-item="${escapeHtml(i.id)}">Request</button>` : ''}</td></tr>`).join('');
+  const units = [...new Set(getInventory().filter(i => i.type === tab).map(i => i.unit))].sort();
   el.innerHTML = page('Inventory', `<div class="tabs"><a class="${tab === 'equipment' ? 'on' : ''}" href="#/inventory?tab=equipment">Equipment</a><a class="${tab === 'medicine' ? 'on' : ''}" href="#/inventory?tab=medicine">Medicine</a></div>
-    <div class="card"><table><tr><th>Item</th><th>Unit</th><th>Qty</th><th>Status</th><th></th></tr>${rows}</table></div>`);
+    <p class="muted">Find items and check stock across units. Medicine is sample data.</p>
+    <div class="inventory-tools"><label>Search items<input id="inventory-search" type="search" placeholder="Search by item name"></label><label>Unit<select id="inventory-unit"><option value="">All units</option>${units.map(u => `<option value="${escapeHtml(u)}">${escapeHtml(u)}</option>`).join('')}</select></label><span id="inventory-count" class="muted" role="status"></span></div>
+    <div class="card"><table><thead><tr><th scope="col">Item</th><th scope="col">Unit</th><th scope="col">Quantity</th><th scope="col">Availability</th><th scope="col">Action</th></tr></thead><tbody>${rows}</tbody></table><p id="inventory-empty" class="empty-state" hidden>No items match your filters.</p></div>`);
+  const search = el.querySelector('#inventory-search');
+  const unit = el.querySelector('#inventory-unit');
+  const filter = () => {
+    let visible = 0;
+    el.querySelectorAll('[data-inventory-row]').forEach(row => {
+      row.hidden = !row.dataset.name.includes(search.value.trim().toLowerCase()) || Boolean(unit.value && row.dataset.unit !== unit.value);
+      if (!row.hidden) visible++;
+    });
+    el.querySelector('#inventory-count').textContent = `${visible} item${visible === 1 ? '' : 's'}`;
+    el.querySelector('#inventory-empty').hidden = visible !== 0;
+  };
+  search.addEventListener('input', filter);
+  unit.addEventListener('change', filter);
+  filter();
   el.querySelector('.hl')?.scrollIntoView({ block: 'center' });
   el.querySelectorAll('[data-request-item]').forEach(button => {
     button.addEventListener('click', () => {

@@ -1,6 +1,7 @@
 // Browser adapter: publishable key identifies this app; access token identifies the user.
 const cfg = window.NEXORA_CONFIG ?? {};
 let auth = null;
+export const isSignedIn = () => Boolean(auth);
 export const isConfigured = () => Boolean(cfg.supabaseUrl && cfg.supabasePublishableKey);
 function config() {
   if (!isConfigured()) throw new Error('Database is not configured');

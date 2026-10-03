@@ -1,6 +1,7 @@
 // STEP 1: boot file. Wires router, nav, role switcher.
 import { ROLES, session, applyPermissions } from './roles.js';
 import { loadData } from './data.js';
+import { isSignedIn } from './api.js';
 import { mountDatabaseControls } from './auth-ui.js';
 import { startRouter } from './router.js';
 import { renderNav } from './nav.js';
@@ -32,6 +33,7 @@ const tick = () => clock.textContent = new Date().toLocaleString('en-CA',
 tick(); setInterval(tick, 30000);
 
 function onRoute(handler, ctx) {
+  if (!isSignedIn()) { app.replaceChildren(); return; }
   app.classList.remove('page-enter'); void app.offsetWidth; app.classList.add('page-enter');
   document.body.classList.add('clock-visible');   // other pages: clock always shown
   scrollTo(0, 0);
@@ -52,4 +54,3 @@ sw.onchange = () => {
 };
 document.getElementById('menu-btn').onclick = () => document.body.classList.toggle('nav-closed');
 if (innerWidth < 760) document.body.classList.add('nav-closed');
-
