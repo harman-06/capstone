@@ -2,6 +2,7 @@
 import { ROLES, session } from '../roles.js';
 import { getPatients, getPatient, getAppointments, getInventory } from '../data.js';
 const page = (title, body) => `<h1>${title}</h1>${body}`;
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const soon = title => el => { el.innerHTML = page(title, '<p class="muted">Coming in a later sprint.</p>'); };
 
 export function appointments(el, { query }) {
@@ -33,17 +34,34 @@ export function inventory(el, { query }) {
   const tab = query.tab || 'equipment';
   const rows = getInventory().filter(i => i.type === tab).map(i => `<tr class="${i.id === query.item ? 'hl' : ''}">
     <td>${i.name}</td><td>${i.unit}${i.unitNo ? ` <span class="muted">(${i.unitNo})</span>` : ''}</td><td>${i.qty}</td><td><span class="badge ${i.status}">${i.status}</span></td>
-    <td>${i.unit !== session.unit ? '<button data-cap="transfers.request">Request</button>' : ''}</td></tr>`).join('');
+    <td>${i.unit !== session.unit ? `<button data-cap="transfers.request" data-request-item="${escapeHtml(i.id)}">Request</button>` : ''}</td></tr>`).join('');
   el.innerHTML = page('Inventory', `<div class="tabs"><a class="${tab === 'equipment' ? 'on' : ''}" href="#/inventory?tab=equipment">Equipment</a><a class="${tab === 'medicine' ? 'on' : ''}" href="#/inventory?tab=medicine">Medicine</a></div>
     <div class="card"><table><tr><th>Item</th><th>Unit</th><th>Qty</th><th>Status</th><th></th></tr>${rows}</table></div>`);
   el.querySelector('.hl')?.scrollIntoView({ block: 'center' });
+  el.querySelectorAll('[data-request-item]').forEach(button => {
+    button.addEventListener('click', () => {
+      location.hash = '#/requests?item=' + encodeURIComponent(button.dataset.requestItem);
+    });
+  });
 }
 
-export const requests = soon('Requests and approvals');
+export function requests(el, { query }) {
+  const item = getInventory().find(i => i.id === query.item);
+  let body = '<p>Select an item in Inventory to view its request details.</p>';
+  if (query.item && !item) body = '<p>This item is not currently loaded. Sign in and refresh Inventory, then select the item again.</p>';
+  if (item) body = `<h2>${escapeHtml(item.name)}</h2>
+    <p>Source unit: ${escapeHtml(item.unit)}</p>
+    <p>Recorded quantity: ${escapeHtml(item.qty)} · Status: ${escapeHtml(item.status)}</p>
+    ${Number(item.qty) <= 0 ? '<p>This unit has no recorded stock for this item. Check Inventory for stock in another unit.</p>' : ''}
+    ${item.type === 'medicine' ? '<p>Medicine quantities are sample data. Medication requests are not supported.</p>' : ''}`;
+  el.innerHTML = page('Requests and approvals', `<div class="card">${body}
+    <p role="status">Online transfer requests are not available yet. No request has been submitted.</p>
+    <a href="#/inventory">Back to Inventory</a></div>`);
+}
 export const users = soon('Users');
 export const notFound = soon('Page not found');
 export const help = el => { el.innerHTML = page('Help', `<div class="card"><ol>
   <li>Use the sidebar to move between sections. You only see what your role can use.</li>
   <li>The dashboard is your home page. Select any card to open the full page.</li>
-  <li>Search Inventory for equipment or medicine. If it's in another unit, select Request.</li>
+  <li>Search Inventory for equipment or medicine. Select Request to view the item's stock details. Online requests are not available yet.</li>
   <li>A lock icon means the action needs approval from a doctor.</li></ol></div>`); };
