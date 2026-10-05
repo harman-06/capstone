@@ -1,3 +1,8 @@
+<!--
+  Nexora Health — app shell
+  One HTML page for the whole site. 
+  main.js fills #sidebar and #app based on the URL hash and the signed-in role; nothing here is role-specific.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,6 +12,7 @@
 <link rel="stylesheet" href="css/style.css?v=20261003-ui2">
 </head>
 <body class="signed-out">
+<!-- Defines the top bar with all of its elements: nav toggle, brand, live clock (main.js), demo role switcher, signed-in user name -->
 <header class="topbar" data-auth-required hidden>
   <button id="menu-btn" aria-label="Toggle menu">☰</button>
   <a class="brand" href="#/dashboard"><span class="brand-mark" aria-hidden="true">+</span> Nexora <span class="brand-light">Health</span></a>
@@ -15,6 +21,7 @@
   <label class="role-label">Preview role <select id="role-switcher"></select></label>
   <span id="user-name" class="user-chip"></span>
 </header>
+  <!-- Sign-in screen (auth-ui.js). Shown instead of the app until the user signs in. -->
 <section id="database-controls" class="database-controls" aria-label="Database connection">
   <div class="signin-brand"><span class="brand-mark" aria-hidden="true">+</span><span>Nexora <b>Health</b></span><small>STAFF WORKSPACE</small></div>
   <div class="signin-welcome"><span class="eyebrow">CARE OPERATIONS, CONNECTED</span><h2>A clearer view.<br>A better working day.</h2><p>Your workspace for equipment, units and care coordination.</p><div class="signin-feature"><span aria-hidden="true">01</span> Find equipment across units</div><div class="signin-feature"><span aria-hidden="true">02</span> Check availability at a glance</div><div class="signin-feature"><span aria-hidden="true">03</span> Navigate with confidence</div><small>CAPSTONE DEMONSTRATION · SYNTHETIC DATA</small></div>
@@ -30,10 +37,13 @@
   <button id="database-refresh" hidden>Refresh equipment</button>
   <p id="database-auth-message" role="status"></p>
 </section>
+<!-- Main app shell: sidebar nav (nav.js) + page content (router.js picks what renders in #app)
+  Everything with [data-auth-required] stays hidden until api.js confirms a signed-in Supabase session (see auth-ui.js) -->
 <div class="layout" data-auth-required hidden>
   <nav id="sidebar" aria-label="Main"></nav>
   <main id="app"></main>
 </div>
+<!-- config.js: public Supabase (backend model) URL + publishable key only, loaded before main.js needs it -->
 <script src="js/config.js"></script>
 <script type="module" src="js/main.js"></script>
 </body>
