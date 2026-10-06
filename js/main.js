@@ -1,8 +1,5 @@
-// Boot file, which constructs the whole page upon loading in.
-// Loads data, starts the router, and wires the role switcher + nav + clock.
-// This is the only file that ties the other pieces together (roles.js, data.js, router.js, nav.js, and the pages)
-// It imports everything in from those otther files.
-// Those files don't know about each other directly, only through this file.
+// Boot file.
+// Constructs the  site by importing everything from the other files.
 import { ROLES, session, applyPermissions } from './roles.js';
 import { loadData } from './data.js';
 import { isSignedIn } from './api.js';
@@ -13,7 +10,8 @@ import { dashboard } from './pages/dashboard.js';
 import { units } from './pages/units.js';
 import * as pg from './pages/other.js';
 
-// These are all the routes. Path pattern -> page function. router.js matches these top to bottom.
+// These are all the routes. 
+// Path URL -> page function.
 // The last entry (.*) is the 404 fallback. Add a page here once it exists.
 const routes = [
   [/^\/dashboard$/, dashboard],
@@ -33,12 +31,15 @@ const app = document.getElementById('app');
 const sw = document.getElementById('role-switcher');
 const who = document.getElementById('user-name');
 
-// Top-bar clock, which ticks every 30s. 
+// Top-bar clock (ticks every 30 sec)
 // Shown once the dashboard's own large greeting has scrolled away, or always on other pages.
 const clock = document.getElementById('clock');
 const tick = () => clock.textContent = new Date().toLocaleString('en-CA',
   { weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
 tick(); setInterval(tick, 30000);
+
+// page handler function
+// checks status / context, loads page.
 function onRoute(handler, ctx) {
   if (!isSignedIn()) { app.replaceChildren(); return; }
   app.classList.remove('page-enter'); void app.offsetWidth; app.classList.add('page-enter');
@@ -50,6 +51,7 @@ function onRoute(handler, ctx) {
   who.textContent = ROLES[session.role].user;
 }
 
+// app started -> Loads data, starts router.
 await loadData();    // data.js: load demo JSON, then try live Supabase equipment
 const refresh = startRouter(routes, onRoute);
 mountDatabaseControls(refresh);    // teammate: wires the sign-in form to the auth state
