@@ -51,7 +51,7 @@ function onRoute(handler, ctx) {
   who.textContent = ROLES[session.role].user;
 }
 
-// app started -> Loads data, starts router.
+// app start
 await loadData();    // data.js: load demo JSON, then try live Supabase equipment
 const refresh = startRouter(routes, onRoute);
 mountDatabaseControls(refresh);    // teammate: wires the sign-in form to the auth state
