@@ -74,8 +74,7 @@ export function patientProfile(el, { params }) {
 
     <div class="banner">Diagnoses: <data-cap="patients.viewSensitive">${p.diagnoses.join(', ') || 'None recorded'}</div>
 
-    <div class="banner">Medications
-      ${p.meds.map(m => `<data-cap="inventory.view" data-fallback="text" href="#/inventory?tab=medicine&item=${m.itemId}">${m.name}</a>`).join('') || '<p class="muted">None.</p>'}
+    <div class="banner">Medications: ${p.meds.map(m => `<data-cap="inventory.view" data-fallback="text" href="#/inventory?tab=medicine&item=${m.itemId}">${m.name}</a>`).join('') || '<p class="muted">None.</p>'}
     </div>
 
     <div class="banner">Allergies: ${p.allergies.join(', ') || 'None recorded'}</div>
