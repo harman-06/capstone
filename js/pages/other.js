@@ -73,6 +73,12 @@ export function patientProfile(el, { params }) {
   el.innerHTML = page(p.name, `
     <div class="banner">Allergies: ${p.allergies.join(', ') || 'None recorded'}</div>
 
+    <div class="banner">Diagnoses: <p data-cap="patients.viewSensitive">${p.diagnoses.join(', ') || 'None recorded'}</p></div>
+
+    <div class="banner">Medications
+      ${p.meds.map(m => `<a class="row" data-cap="inventory.view" data-fallback="text" href="#/inventory?tab=medicine&item=${m.itemId}">${m.name}</a>`).join('') || '<p class="muted">None.</p>'}
+    </div>
+
     <div class="card" data-cap="patients.viewSensitive">
       <h3>Patient details</h3>
       <dl class="item-facts">
@@ -84,12 +90,6 @@ export function patientProfile(el, { params }) {
         <div><dt>Email</dt><dd>${escapeHtml(p.contact?.email) || '—'}</dd></div>
         <div><dt>Address</dt><dd>${escapeHtml(p.contact?.address) || '—'}</dd></div>
       </dl>
-    </div>
-
-    <div class="card"><h3>Diagnoses</h3><p data-cap="patients.viewSensitive">${p.diagnoses.join(', ') || 'None recorded'}</p></div>
-
-    <div class="card"><h3>Medications</h3>
-      ${p.meds.map(m => `<a class="row" data-cap="inventory.view" data-fallback="text" href="#/inventory?tab=medicine&item=${m.itemId}">${m.name}</a>`).join('') || '<p class="muted">None.</p>'}
     </div>
 
     <div class="card" data-cap="patients.viewSensitive">
