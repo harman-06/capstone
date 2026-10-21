@@ -22,7 +22,7 @@ const routes = [
   [/^\/patients\/(\w+)$/, pg.patientProfile],
   [/^\/my-health$/, pg.myHealth],
   [/^\/inventory$/, pg.inventory],
-  [/^\/inventory\/(\w+)$/, inventoryItem],   // ADDED (Harman): must stay below /inventory above — router.js matches top-down
+  [/^\/inventory\/([\w-]+)$/, inventoryItem],   // ADDED (Harman): must stay below /inventory above — router.js matches top-down
   [/^\/units$/, units],
   [/^\/requests$/, pg.requests],
   [/^\/users$/, pg.users],
