@@ -71,13 +71,14 @@ export function patientProfile(el, { params }) {
   // and a "Book a new appointment" button. Diagnoses/medications/allergy
   // banner/appointments link are the original sections, kept as-is.
   el.innerHTML = page(p.name, `
-    <div class="banner">Allergies: ${p.allergies.join(', ') || 'None recorded'}</div>
 
-    <div class="banner">Diagnoses: <p data-cap="patients.viewSensitive">${p.diagnoses.join(', ') || 'None recorded'}</p></div>
+    <div class="banner">Diagnoses: <data-cap="patients.viewSensitive">${p.diagnoses.join(', ') || 'None recorded'}</div>
 
     <div class="banner">Medications
-      ${p.meds.map(m => `<a class="row" data-cap="inventory.view" data-fallback="text" href="#/inventory?tab=medicine&item=${m.itemId}">${m.name}</a>`).join('') || '<p class="muted">None.</p>'}
+      ${p.meds.map(m => `<data-cap="inventory.view" data-fallback="text" href="#/inventory?tab=medicine&item=${m.itemId}">${m.name}</a>`).join('') || '<p class="muted">None.</p>'}
     </div>
+
+    <div class="banner">Allergies: ${p.allergies.join(', ') || 'None recorded'}</div>
 
     <div class="card" data-cap="patients.viewSensitive">
       <h3>Patient details</h3>
