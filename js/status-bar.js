@@ -12,4 +12,4 @@ export function mountStatusBarTooltip() {
     sync(el);
     new MutationObserver(() => sync(el)).observe(el, { childList: true, characterData: true, subtree: true });
   });
-}
+} 
