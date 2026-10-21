@@ -4,10 +4,12 @@ import { ROLES, session, applyPermissions } from './roles.js';
 import { loadData } from './data.js';
 import { isSignedIn } from './api.js';
 import { mountDatabaseControls } from './auth-ui.js';
+import { mountStatusBarTooltip } from './status-bar.js';   // ADDED (Harman): hover tooltip for the shrunk status bar
 import { startRouter } from './router.js';
 import { renderNav } from './nav.js';
 import { dashboard } from './pages/dashboard.js';
 import { units } from './pages/units.js';
+import { inventoryItem } from './pages/inventory-item.js';   // ADDED (Harman): inventory item detail subpage
 import * as pg from './pages/other.js';
 
 // These are all the routes. 
@@ -20,6 +22,7 @@ const routes = [
   [/^\/patients\/(\w+)$/, pg.patientProfile],
   [/^\/my-health$/, pg.myHealth],
   [/^\/inventory$/, pg.inventory],
+  [/^\/inventory\/(\w+)$/, inventoryItem],   // ADDED (Harman): must stay below /inventory above — router.js matches top-down
   [/^\/units$/, units],
   [/^\/requests$/, pg.requests],
   [/^\/users$/, pg.users],
@@ -55,6 +58,7 @@ function onRoute(handler, ctx) {
 await loadData();    // data.js: load demo JSON, then try live Supabase equipment
 const refresh = startRouter(routes, onRoute);
 mountDatabaseControls(refresh);    // teammate: wires the sign-in form to the auth state
+mountStatusBarTooltip();           // ADDED (Harman): full status text on hover once the bar is shrunk
 
 // Demo role switcher: lets anyone signed in preview how the UI looks per
 // role. Does NOT change real database permissions — those come from Supabase Auth/RLS, independent of this dropdown.
