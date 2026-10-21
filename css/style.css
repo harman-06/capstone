@@ -1,66 +1,227 @@
-/* STEP 1: shell styles. Change the tokens first, everything follows. */
-:root{--bg:#f3f6f9;--surface:#ffffff;--ink:#172b3a;--muted:#647687;--brand:#086d73;--tint:#e5f3f2;--line:#dfe7ee;--ok:#15803d;--warn:#b45309;--bad:#b42318;--r:12px}
+/* shell styles */
+   :root{--bg:#f3f6f9;--surface:#ffffff;--ink:#172b3a;--muted:#647687;--brand:#086d73;--tint:#e5f3f2;--line:#dfe7ee;--ok:#15803d;--warn:#b45309;--bad:#b42318;--r:12px}
+
 /* surface includes the sidebar, top and cards. */
 *{box-sizing:border-box}
-body{margin:0;font:15px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--ink)}
-a{color:var(--brand)}
-.topbar{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
-.brand{font-weight:700;text-decoration:none}.spacer{flex:1}
-#menu-btn{border:0;background:none;font-size:20px;cursor:pointer}
-.layout{display:flex;min-height:calc(100vh - 53px)}
-#sidebar{width:210px;flex:none;padding:16px 10px;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;transition:margin .25s}
-body.nav-closed #sidebar{margin-left:-210px}
-#sidebar a{padding:9px 12px;border-radius:8px;color:var(--ink);text-decoration:none;transition:background .15s}
-#sidebar a:hover{background:var(--bg)}
-#sidebar a.active{background:var(--tint);color:var(--brand);font-weight:600}
-main{flex:1;min-width:0;padding:24px;max-width:1200px}
-.page-enter{animation:in .3s ease}
-@keyframes in{from{opacity:0;transform:translateY(6px)}}
-h1{margin:0 0 4px;font-size:26px}h3{margin:0 0 6px}
-.muted{color:var(--muted)}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:16px}
-.row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);color:inherit;text-decoration:none}
-.row:first-of-type{border-top:0}
-a.row:hover{color:var(--brand)}
-.more{display:inline-block;margin-top:8px}
 
-/* STEP 4: dashboard */
-.dash{display:grid;grid-template-columns:5fr 4fr;gap:8px}
-.dash>div{min-width:0}
-.dash .card{margin:0;padding:12px 16px}
-.w-greeting,.w-patients,.w-myHealth{grid-column:1/-1}
-.w-notifications:last-child{grid-column:1/-1}
+body
+   {margin:0;
+   font:15px/1.5 system-ui,sans-serif;
+   background:var(--bg);
+   color:var(--ink)}
+a 
+   {color:var(--brand)}
+.topbar
+   {display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 16px;
+    background:var(--surface);
+    border-bottom:1px solid var(--line);
+    position:sticky;
+    top:0;
+    z-index:5}
+.brand
+   {font-weight:700;
+    text-decoration:none}.spacer{flex:1}
+#menu-btn
+   {border:0;
+    background:none;
+    font-size:20px;
+    cursor:pointer}
+.layout
+   {display:flex;
+    min-height:calc(100vh - 53px)}
+#sidebar
+   {width:210px;
+    flex:none
+    ;padding:16px 10px;
+    background:var(--surface);
+    border-right:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    transition:margin .25s}
+body.nav-closed #sidebar
+   {margin-left:-210px}
+#sidebar a
+   {padding:9px 12px;
+    border-radius:8px;
+    color:var(--ink);
+    text-decoration:none;
+    transition:background .15s}
+#sidebar a:hover
+   {background:var(--bg)}
+#sidebar a.active
+   {background:var(--tint);
+    color:var(--brand);
+    font-weight:600}
+main
+   {flex:1;
+    min-width:0;
+    padding:24px;
+    max-width:1200px}
+.page-enter
+   {animation:in .3s ease}
 
-#clock{font-size:14px;color:var(--muted);white-space:nowrap;opacity:0;transform:translateY(-4px);transition:opacity .25s,transform .25s}
-body.clock-visible #clock{opacity:1;transform:none}
+@keyframes in{from
+   {opacity:0;
+    transform:translateY(6px)}
+   }
+h1
+   {margin:0 0 4px;
+    font-size:26px}
+h3
+   {margin:0 0 6px}
 
-.greeting-bar{--p:0;position:sticky;top:53px;z-index:3;background:var(--bg);padding:4px 0 8px;margin-bottom:8px}
-.greeting-bar h1{margin:0;font-size:calc(36px - 16px * var(--p));line-height:1.15}
-.greeting-bar p{margin:0;overflow:hidden;opacity:calc(1 - var(--p) * 1.6);max-height:calc(24px * (1 - var(--p)))}
+.muted
+   {color:var(--muted)}
+
+.card
+   {background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--r);
+    padding:16px;
+    margin-bottom:16px}
+.row
+   {display:flex;
+    justify-content:space-between;
+    gap:12px;
+    padding:8px 0;
+    border-top:1px solid var(--line);
+    color:inherit;
+    text-decoration:none}
+.row:first-of-type
+   {border-top:0}
+a.row:hover
+   {color:var(--brand)}
+.more
+   {display:inline-block;margin-top:8px}
+
+/* dashboard */
+.dash
+   {display:grid;
+    grid-template-columns:5fr 4fr;
+    gap:8px}
+.dash>div
+   {min-width:0}
+.dash .card
+   {margin:0;
+    padding:12px 16px}
+
+.w-greeting,.w-patients,.w-myHealth
+   {grid-column:1/-1}
+.w-notifications:last-child
+   {grid-column:1/-1}
+
+#clock
+   {font-size:14px;
+    color:var(--muted);
+    white-space:nowrap;
+    opacity:0;
+    transform:translateY(-4px);
+    transition:opacity .25s,transform .25s}
+
+body.clock-visible #clock
+   {opacity:1;
+    transform:none}
+
+.greeting-bar
+   {--p:0;
+    position:sticky;
+    top:53px;
+    z-index:3;
+    background:var(--bg);
+    padding:4px 0 8px;
+    margin-bottom:8px}
+.greeting-bar h1
+   {margin:0;
+    font-size:calc(36px - 16px * var(--p));
+    line-height:1.15}
+.greeting-bar p
+   {margin:0;
+    overflow:hidden;
+    opacity:calc(1 - var(--p) * 1.6);
+    max-height:calc(24px * (1 - var(--p)))}
 
 /* expandable panels (Patients / My Health) */
-.expand-toggle{all:unset;cursor:pointer;display:flex;justify-content:space-between;width:100%;font-weight:600}
-.chev{transition:transform .3s}
-.open .chev{transform:rotate(180deg)}
-.expand-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
-.expand-body>div{overflow:hidden}
-.open .expand-body{grid-template-rows:1fr}
-.w-patients .expand-body>div{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));column-gap:24px}
-.w-patients .row{border-top:0;border-bottom:1px solid var(--line)}
-.w-patients .more{grid-column:1/-1}
+.expand-toggle
+   {all:unset;
+    cursor:pointer;
+    display:flex;
+    justify-content:space-between;
+    width:100%;
+    font-weight:600}
+.chev
+   {transition:transform .3s}
+.open .chev
+   {transform:rotate(180deg)}
+.expand-body
+   {display:grid;
+    grid-template-rows:0fr;
+    transition:grid-template-rows .3s ease}
+.expand-body>div
+   {overflow:hidden}
+.open .expand-body
+   {grid-template-rows:1fr}
+.w-patients .expand-body>div
+   {display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+    column-gap:24px}
+.w-patients .row
+   {border-top:0;
+    border-bottom:1px solid var(--line)}
+.w-patients .more
+   {grid-column:1/-1}
 
 /* notifications */
-.w-notifications .card{padding:12px 16px}
-.w-notifications .row{padding:8px 0;font-size:15px}
-.notif-list{max-height:150px;overflow-y:auto;overflow-x:hidden;padding-right:6px;scrollbar-width:thin;scrollbar-color:#9aa9b8 var(--line)}
-.notif-toggle{all:unset;cursor:pointer;display:flex;justify-content:space-between;width:100%;box-sizing:border-box;padding:8px 0;border-top:1px solid var(--line);font-size:15px;overflow-wrap:anywhere}
-.notif-group:first-child .notif-toggle{border-top:0}
-.notif-sub{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
-.notif-sub>div{overflow:hidden}
-.notif-group.open .notif-sub{grid-template-rows:1fr}
-.sub-item{display:block;background:var(--bg);border-radius:10px;padding:6px 12px;margin:4px 0;font-size:14px;color:var(--ink);text-decoration:none;overflow-wrap:anywhere}
-.sub-item:hover{color:var(--brand)}
-.sev-warn{color:var(--warn)}.sev-bad{color:var(--bad)}
+.w-notifications .card
+   {padding:12px 16px}
+.w-notifications .row
+   {padding:8px 0;
+    font-size:15px}
+.notif-list
+   {max-height:150px;
+    overflow-y:auto;
+    overflow-x:hidden;
+    padding-right:6px;
+    scrollbar-width:thin;
+    scrollbar-color:#9aa9b8 var(--line)}
+.notif-toggle
+   {all:unset;
+    cursor:pointer;
+    display:flex;
+    justify-content:space-between;
+    width:100%;
+    box-sizing:border-box;
+    padding:8px 0;
+    border-top:1px solid var(--line);
+    font-size:15px;
+    overflow-wrap:anywhere}
+.notif-group:first-child .notif-toggle
+   {border-top:0}
+.notif-sub
+   {display:grid;
+    grid-template-rows:0fr;
+    transition:grid-template-rows .3s ease}
+.notif-sub>div
+   {overflow:hidden}
+.notif-group.open .notif-sub
+   {grid-template-rows:1fr}
+.sub-item
+   {display:block;
+    background:var(--bg);
+    border-radius:10px;
+    padding:6px 12px;
+    margin:4px 0;
+    font-size:14px;
+    color:var(--ink);
+    text-decoration:none;
+    overflow-wrap:anywhere}
+.sub-item:hover
+   {color:var(--brand)}
+.sev-warn
+   {color:var(--warn)}.sev-bad{color:var(--bad)}
 
 @media(max-width:760px){.dash{grid-template-columns:1fr}}
 
@@ -78,7 +239,6 @@ button{font:inherit;padding:5px 12px;border-radius:8px;border:1px solid var(--br
 @media(max-width:760px){body{--w:0}#sidebar{position:fixed;top:53px;bottom:0;z-index:4}main{padding:16px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
-
 .database-controls { margin: 12px 20px; padding: 12px; border: 1px solid #ccc; border-radius: 8px; }
 .database-controls p { margin: 4px 0 10px; }
 .database-controls form { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
@@ -92,7 +252,7 @@ body.signed-out .database-controls input { width: 100%; box-sizing: border-box; 
 
 /* Staff workspace: readable hierarchy, clear controls and responsive navigation. */
 [hidden] { display:none !important; }
-body { font-family: Inter, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+body { font-family: Sans-Serif, "Gill Sans", system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
 :focus-visible { outline:3px solid #49b8c0; outline-offset:3px; }
 button, input, select { font:inherit; }
 button { padding:9px 14px; font-weight:600; transition:background .15s; }
