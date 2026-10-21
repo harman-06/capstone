@@ -13,6 +13,7 @@ function ensureHost() {
   return host;
 }
 
+
 /**
  * opts:
  *   title        — modal heading
