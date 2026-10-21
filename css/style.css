@@ -137,10 +137,16 @@ td:first-child { font-weight:600; }
 .inventory-tools input { min-width:240px; }
 .inventory-tools .muted { margin-left:auto; padding-bottom:8px; }
 .empty-state { text-align:center; padding:28px; color:var(--muted); }
-.database-controls { display:flex; align-items:center; flex-wrap:wrap; gap:12px; padding:12px 28px; margin:0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:#fff; }
-.database-controls p { margin:0; font-size:12px; color:var(--muted); }
+/* ADDED/CHANGED (Harman): shrink the signed-in Supabase status bar heavily —
+   one slim line instead of wrapping status + message onto two. Both texts
+   are truncated with ellipsis; the full text is still available on hover
+   via the title attribute set by js/status-bar.js. */
+.database-controls { display:flex; align-items:center; gap:10px; padding:4px 16px; margin:0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:#fff; min-height:0; }
+.database-controls p { margin:0; font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+#database-status { flex:1 1 auto; min-width:60px; }
 #database-auth-message:empty { display:none; }
-#database-auth-message { flex-basis:100%; }
+#database-auth-message { flex:1 1 auto; min-width:60px; border-left:1px solid var(--line); padding-left:10px; }
+.database-controls button { padding:3px 10px; font-size:11px; font-weight:600; flex:none; }
 .signin-brand, .signin-welcome { display:none; }
 body.signed-out { min-height:100vh; display:grid; place-items:center; background:#eef4f6; padding:32px 16px; }
 body.signed-out .database-controls { display:block; position:relative; width:min(980px,100%); min-height:580px; margin:0; padding:114px 56px 48px 55%; border:1px solid #dae5eb; border-radius:22px; box-shadow:0 18px 60px #17304712; overflow:hidden; }
@@ -176,4 +182,49 @@ body.signed-out .database-controls > form { width:44%; margin-left:auto; }
   body.signed-out .database-controls > h1,
   body.signed-out .database-controls > p,
   body.signed-out .database-controls > form { width:100%; }
+}
+
+/* ============================================================================
+   ADDED BY HARMAN — new UI for the Inventory item detail page, the approval
+   marker/tooltip, the shared modal dialog, the expanded Patient Profile
+   (facts grid + notes), and the Requests table. Nothing above this line was
+   changed by these additions other than the .database-controls shrink above.
+   ============================================================================ */
+
+/* Small inline warning icon on an item needing doctor approval; hover/focus
+   reveals the explanation as a tooltip bubble. */
+.approval-marker { position:relative; display:inline-flex; align-items:center; gap:4px; color:var(--warn); font-size:12px; font-weight:600; cursor:help; margin-left:6px; }
+.approval-tooltip { position:absolute; left:0; top:140%; z-index:6; width:220px; background:var(--ink); color:#fff; font-weight:400; font-size:12px; line-height:1.4; padding:8px 10px; border-radius:8px; opacity:0; pointer-events:none; transform:translateY(-4px); transition:opacity .15s, transform .15s; }
+.approval-marker:hover .approval-tooltip, .approval-marker:focus .approval-tooltip, .approval-marker:focus-visible .approval-tooltip { opacity:1; pointer-events:auto; transform:none; }
+
+/* Inventory item detail page */
+.item-description { margin:0 0 14px; }
+.item-facts { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px 24px; margin:0 0 16px; }
+.item-facts dt { font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin-bottom:3px; }
+.item-facts dd { margin:0; font-size:15px; }
+
+/* Generic modal dialog (js/modal.js) */
+.modal-backdrop { position:fixed; inset:0; background:#17304766; display:flex; align-items:center; justify-content:center; z-index:50; padding:16px; }
+.modal { background:var(--surface); border-radius:14px; width:min(440px,100%); max-height:90vh; overflow:auto; box-shadow:0 20px 60px #17304730; }
+.modal-head { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--line); }
+.modal-head h2 { margin:0; font-size:18px; }
+.modal-close { background:none; border:0; font-size:22px; line-height:1; padding:0; color:var(--muted); }
+.modal-body { padding:16px 20px; display:grid; gap:14px; }
+.modal-body label { display:grid; gap:6px; font-size:13px; font-weight:600; }
+.modal-body input, .modal-body select, .modal-body textarea { font:inherit; padding:9px 12px; border:1px solid #cbd7e1; border-radius:8px; }
+.modal-foot { display:flex; justify-content:flex-end; gap:10px; padding:14px 20px; border-top:1px solid var(--line); }
+.modal-submit { background:var(--brand); color:#fff; border-color:var(--brand); }
+.modal-submit:hover { background:#07565d; }
+
+/* Patient Profile: notes (multi-author) */
+.note { padding:10px 0; border-top:1px solid var(--line); }
+.note:first-child { border-top:0; }
+.note-meta { font-size:12px; margin-bottom:3px; }
+.note p { margin:0; font-size:14px; }
+#add-note-form { margin-top:12px; display:grid; gap:8px; }
+#add-note-form textarea { width:100%; font:inherit; padding:9px 12px; border:1px solid #cbd7e1; border-radius:8px; }
+#add-note-form button { justify-self:start; }
+
+@media(max-width:760px){
+  .database-controls p { max-width:45vw; }
 }
