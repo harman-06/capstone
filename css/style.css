@@ -67,7 +67,7 @@ body.clock-visible #clock{opacity:1;transform:none}
 /* STEP 2 helpers + STEP 5 pages */
 .locked{opacity:.55;cursor:not-allowed}.locked::after{content:" 🔒"}
 .masked{letter-spacing:2px;color:var(--muted)}
-.banner{background:#fdecea;color:var(--bad);border-radius:var(--r);padding:10px 14px;margin-bottom:16px;font-weight:600}
+.banner{background:#fdecea;color:var(--bad);display:flex;border-radius:var(--r);padding:10px 14px;margin-bottom:16px;font-weight:600}
 .tabs{display:flex;gap:6px;margin:12px 0}
 .tabs a{padding:6px 14px;border-radius:99px;text-decoration:none;color:var(--ink)}.tabs a.on{background:var(--brand);color:#fff}
 table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:8px;border-top:1px solid var(--line)}
