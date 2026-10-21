@@ -25,9 +25,9 @@ a.row:hover{color:var(--brand)}
 .more{display:inline-block;margin-top:8px}
 
 /* STEP 4: dashboard */
-.dash{display:grid;grid-template-columns:5fr 4fr;gap:12px}
+.dash{display:grid;grid-template-columns:5fr 4fr;gap:8px}
 .dash>div{min-width:0}
-.dash .card{margin:0;padding:12px 14px}
+.dash .card{margin:0;padding:12px 16px}
 .w-greeting,.w-patients,.w-myHealth{grid-column:1/-1}
 .w-notifications:last-child{grid-column:1/-1}
 
@@ -50,7 +50,7 @@ body.clock-visible #clock{opacity:1;transform:none}
 .w-patients .more{grid-column:1/-1}
 
 /* notifications */
-.w-notifications .card{padding:12px 18px}
+.w-notifications .card{padding:12px 16px}
 .w-notifications .row{padding:8px 0;font-size:15px}
 .notif-list{max-height:150px;overflow-y:auto;overflow-x:hidden;padding-right:6px;scrollbar-width:thin;scrollbar-color:#9aa9b8 var(--line)}
 .notif-toggle{all:unset;cursor:pointer;display:flex;justify-content:space-between;width:100%;box-sizing:border-box;padding:8px 0;border-top:1px solid var(--line);font-size:15px;overflow-wrap:anywhere}
