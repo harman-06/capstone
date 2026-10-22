@@ -65,7 +65,7 @@ body.nav-closed #sidebar{margin-left:-210px}
 main{flex:1;min-width:0;padding:24px;max-width:1200px}
 .page-enter{animation:in .3s ease}
 @keyframes in{from{opacity:0;transform:translateY(6px)}}
-h1{margin:0 0 4px;font-size:26px}h3{margin:0 0 6px}
+h1{margin:0 0 0;font-size:26px}h3{margin:0 0 6px} /*changed from 4px to 0px*/
 .muted{color:var(--muted);}
 
 .card{
@@ -156,7 +156,7 @@ tr.hl{background:rgba(255,247,214,0.7)}
 .badge{padding:2px 10px;border-radius:99px;font-size:13px;background:var(--line)}
 .badge.available{background:#dcfce7;color:var(--ok)}.badge.low{background:#fef3c7;color:var(--warn)}.badge.out{background:#fee2e2;color:var(--bad)}
 button{
-  font:inherit;padding:5px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.5);
+  font:inherit;padding:5px 12px;border-radius:12px;border:1px solid rgba(0,0,0,0.5);
   background:var(--surface);backdrop-filter:blur(var(--blur));color:var(--brand);cursor:pointer;
   box-shadow: var(--shadow-soft);
 }
