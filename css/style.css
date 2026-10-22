@@ -37,12 +37,7 @@ a{color:var(--brand)}
 }
 .brand
   {font-weight:700;
-   text-decoration:none
-  .grow-on-hover {
-    transition: transform 0.3s ease-in-out;
-    .grow-on-hover:hover {
-    transform: scale(1.1); 
-  } }.spacer{flex:1}
+   text-decoration:none }.spacer{flex:1}
 #menu-btn{border:0;background:none;font-size:20px;cursor:pointer}
 .layout{display:flex;min-height:calc(100vh - 53px)}
 #sidebar{
