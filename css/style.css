@@ -9,7 +9,7 @@
   --ink:rgb(0, 0, 0, 0.7);--muted:#000000;--brand:#ffffff;--tint:#f5e6d3;
   --line:rgba(255, 255, 255, 0.1);
   --ok:#15803d;--warn:#b45309;--bad:#b42318;
-  --r:20px;                     /* soft rounded corners for neumorphism */
+  --r:20px;                     
   --blur:14px;
   --shadow-soft: 6px 6px 14px rgba(23,48,71,0.14), -3px -3px 8px rgba(255,255,255,0.35);
   --shadow-deep: 16px 16px 32px rgba(23,48,71,0.22), -4px -4px 26px rgba(255,255,255,0.3);
@@ -34,11 +34,13 @@ a{color:#d3e9ed80}
   position:sticky;top:0;z-index:5;
   box-shadow: 0 4px 24px rgba(23,48,71,0.08);
 }
-.brand{font-weight:700;text-decoration:none}.spacer{flex:1}
+.brand{font-weight:700;
+      text-shadow: -2px 2px 2px rgba(255,255,255,0.25);
+       text-decoration:none}.spacer{flex:1}
 #menu-btn{border:0;
           background:none;
           font-size:20px;
-          text-shadow: 0 1px 2px rgba(23,48,71,0.25);
+          text-shadow: -2px 2px 2px rgba(23,48,71,0.25);
           cursor:pointer}
 .layout{display:flex;min-height:calc(100vh - 53px)}
 #sidebar{
@@ -176,7 +178,13 @@ button:hover { background:var(--tint); box-shadow: var(--shadow-deep); }
 button:disabled { opacity:.55; cursor:wait; }
 input, select { border:1px solid rgba(255,255,255,0.5); border-radius:10px; padding:9px 12px; background:rgba(255,255,255,0.65); color:var(--ink); }
 .topbar { min-height:72px; padding:12px 28px; gap:20px; }
-.brand { display:flex; align-items:center; gap:8px; font-size:20px; letter-spacing:-.5px; color:var(--ink); }
+.brand { display:flex; 
+        align-items:center; 
+        gap:8px; 
+        font-size:20px; 
+        text-shadow: -2px 2px 2px rgba(255,255,255,0.25);
+        letter-spacing:-.5px; 
+        color:var(--ink); }
 .brand-light { font-weight:400; }
 .brand-mark {
   display:inline-grid; place-items:center; flex:none; width:34px; height:34px; border-radius:12px;
