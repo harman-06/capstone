@@ -3,7 +3,7 @@
   --bg:#eef2f0;                 /* flat fallback used by small UI bits (hover states, chips) */
   --gradient-start:#d3e9ed;     /* light blue */
   --gradient-end:#fce5c5;     /* light brown/tan */
-  --surface:rgba(255,255,255,0.55);     /* frosted glass surface */
+  --surface:rgba(255,255,255,0.3);     /* frosted glass surface */
   --surface-solid:#ffffff;
   --topbar:rgba(255,255,255,0.55);
   --ink:#172b3a;--muted:#5c7183;--brand:#086d73;--tint:#e5f3f2;
