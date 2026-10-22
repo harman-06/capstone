@@ -1,8 +1,8 @@
 /* shell styles */
 :root{
   --bg:#eef2f0;                 /* flat fallback used by small UI bits (hover states, chips) */
-  --gradient-start:#eaf4f8;     /* light blue */
-  --gradient-end:#f5ece0;       /* light brown/tan */
+  --gradient-start:#d3e9ed;     /* light blue */
+  --gradient-end:#edc998;       /* light brown/tan */
   --surface:rgba(255,255,255,0.55);     /* frosted glass surface */
   --surface-solid:#ffffff;
   --topbar:rgba(255,255,255,0.55);
