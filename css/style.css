@@ -6,7 +6,7 @@
   --surface:rgba(255,255,255,0.23);     /* frosted glass surface */
   --surface-solid:#ffffff;
   --topbar:rgba(255,255,255,0.55);
-  --ink:#89c8d6;--muted:#9bb9bf;--brand:rgba(157, 188, 199, 0.25);--tint:#dff1f5;
+  --ink:#89c8d6;--muted:#e9f3f5;--brand:rgba(157, 188, 199, 0.25);--tint:#dff1f5;
   --line:rgba(137, 200, 214, 0.14);
   --ok:#15803d;--warn:#b45309;--bad:#b42318;
   --r:20px;                     /* soft rounded corners for neumorphism */
@@ -54,7 +54,7 @@ main{flex:1;min-width:0;padding:24px;max-width:1200px}
 .page-enter{animation:in .3s ease}
 @keyframes in{from{opacity:0;transform:translateY(6px)}}
 h1{margin:0 0 4px;font-size:26px}h3{margin:0 0 6px}
-.muted{color:var(--muted)}
+.muted{color:var(--muted); text-shadow: 0 1px 2px rgba(23,48,71,0.25);}
 
 .card{
   backdrop-filter: blur(var(--blur));
