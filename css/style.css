@@ -3,7 +3,7 @@
   --bg:#eef2f0;                 /* flat fallback used by small UI bits (hover states, chips) */
   --gradient-start:#d3e9ed;     /* light blue */
   --gradient-end:#fce5c5;     /* light brown/tan */
-  --surface:rgba(255,255,255,0.18);     /* frosted glass surface */
+  --surface:rgba(255,255,255,0.23);     /* frosted glass surface */
   --surface-solid:#ffffff;
   --topbar:rgba(255,255,255,0.55);
   --ink:#172b3a;--muted:#5c7183;--brand:#086d73;--tint:#e5f3f2;
@@ -60,7 +60,7 @@ h1{margin:0 0 4px;font-size:26px}h3{margin:0 0 6px}
   backdrop-filter: blur(var(--blur));
   -webkit-backdrop-filter: blur(var(--blur));
   background:var(--surface);
-  border:1px solid rgba(255,255,255,0.4);
+  border:3px solid rgba(255,255,255,0.4);
   border-radius:var(--r);
   padding:16px;margin-bottom:16px;
   box-shadow: var(--shadow-soft);
