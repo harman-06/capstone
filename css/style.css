@@ -88,7 +88,7 @@ h3
     border-radius:var(--r);
     padding:16px;
     margin-bottom:16px;
-    box-shadow: 12px 12px 24px #bebebe, /* bottom-right */ -12px -12px 24px #ffffff /* top-left */;
+    box-shadow: 1px 1px 2px #bebebe, /* bottom-right */ -1px -1px -2px #ffffff /* top-left */;
    }
 .row
    {display:flex;
