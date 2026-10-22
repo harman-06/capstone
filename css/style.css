@@ -60,7 +60,7 @@ h1{margin:0 0 4px;font-size:26px}h3{margin:0 0 6px}
   backdrop-filter: blur(var(--blur));
   -webkit-backdrop-filter: blur(var(--blur));
   background:var(--surface);
-  border:3px solid rgba(255,255,255,0.4);
+  border:6px solid rgba(255,255,255,0.4);
   border-radius:var(--r);
   padding:16px;margin-bottom:16px;
   box-shadow: var(--shadow-soft);
@@ -113,7 +113,11 @@ body.clock-visible #clock{opacity:1;transform:none}
 /* STEP 2 helpers + STEP 5 pages */
 .locked{opacity:.55;cursor:not-allowed}.locked::after{content:" 🔒"}
 .masked{letter-spacing:2px;color:var(--muted)}
-.banner{background:rgba(253,236,234,0.8);backdrop-filter:blur(var(--blur));color:var(--bad);display:flex;border-radius:var(--r);padding:10px 14px;margin-bottom:16px;font-weight:600}
+.banner
+    {background:rgba(253,236,234,0.8);
+     backdrop-filter:blur(var(--blur));
+     color:var(--bad);
+     display:flexfont-weight:600}
 .tabs{display:flex;gap:6px;margin:12px 0;background:var(--surface);backdrop-filter:blur(var(--blur));border-radius:14px;padding:4px;width:fit-content;box-shadow:var(--shadow-soft)}
 .tabs a{padding:6px 14px;border-radius:10px;text-decoration:none;color:var(--ink)}.tabs a.on{background:var(--brand);color:#fff}
 table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:8px;border-top:1px solid var(--line)}
