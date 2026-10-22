@@ -1,6 +1,7 @@
 /* shell styles */
-   :root{--bg:#f0f8ff;
-         --surface:rgb(224 224 224 / 0.5);
+   :root{--bg:#f0eada;
+         --topbar:#e0e0e0;
+         --surface:rgb(0 0 0 / 0.6);
          --ink:#172b3a;--muted:#647687;--brand:#086d73;--tint:#e5f3f2;--line:#dfe7ee;--ok:#15803d;--warn:#b45309;--bad:#b42318;--r:1px}
 
 /* surface includes the sidebar, top and cards. */
