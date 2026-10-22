@@ -6,7 +6,7 @@
   --surface:rgba(255,255,255,0.23);     /* frosted glass surface */
   --surface-solid:#ffffff;
   --topbar:rgba(255,255,255,0.55);
-  --ink:rgb(0, 0, 0, 0.7);--muted:#000000;--brand:#d3e9ed80;--tint:#f5e6d3;
+  --ink:rgb(0, 0, 0, 0.7);--muted:#000000;--brand:#ffffff;--tint:#f5e6d3;
   --line:rgba(255, 255, 255, 0.1);
   --ok:#15803d;--warn:#b45309;--bad:#b42318;
   --r:20px;                     /* soft rounded corners for neumorphism */
@@ -24,7 +24,7 @@ body{
   background-attachment: fixed;
   color:var(--ink);
 }
-a{color:var(--brand)}
+a{color:#d3e9ed80}
 .topbar{
   display:flex;align-items:center;gap:12px;padding:10px 16px;
   background:var(--surface);
@@ -35,7 +35,11 @@ a{color:var(--brand)}
   box-shadow: 0 4px 24px rgba(23,48,71,0.08);
 }
 .brand{font-weight:700;text-decoration:none}.spacer{flex:1}
-#menu-btn{border:0;background:none;font-size:20px;cursor:pointer}
+#menu-btn{border:0;
+          background:none;
+          font-size:20px;
+          text-shadow: 0 1px 2px rgba(23,48,71,0.25);
+          cursor:pointer}
 .layout{display:flex;min-height:calc(100vh - 53px)}
 #sidebar{
   width:210px;flex:none;padding:16px 10px;
