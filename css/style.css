@@ -1,7 +1,7 @@
 /* shell styles */
    :root{--bg:#f0eada;
          --topbar:#e0e0e0;
-         --surface:#ffffff;
+         --surface:#ffffff80;
          --ink:#172b3a;--muted:#647687;--brand:#086d73;--tint:#e5f3f2;--line:#dfe7ee;--ok:#15803d;--warn:#b45309;--bad:#b42318;--r:1px}
 
 /* surface includes the sidebar, top and cards. */
@@ -9,7 +9,8 @@
 body
    {margin:0;
    font:15px/1.5 system-ui,sans-serif;
-   background:var(--bg);
+   .linear-angle {
+   background-image: linear-gradient(45deg, #f0eada, #daeef0);
    color:var(--ink)}
 a 
    {color:var(--brand)}
@@ -86,7 +87,9 @@ h3
     border:1px solid var(--line);
     border-radius:var(--r);
     padding:16px;
-    margin-bottom:16px}
+    margin-bottom:16px;
+    box-shadow: 12px 12px 24px #bebebe, /* bottom-right */ -12px -12px 24px #ffffff /* top-left */;
+   }
 .row
    {display:flex;
     justify-content:space-between;
