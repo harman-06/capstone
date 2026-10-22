@@ -6,7 +6,7 @@
   --surface:rgba(255,255,255,0.23);     /* frosted glass surface */
   --surface-solid:#ffffff;
   --topbar:rgba(255,255,255,0.55);
-  --ink:rgb(0, 0, 0, 0.7);--muted:rgb(245, 230, 211, 0.5);--brand:#ffffff;--tint:rgb(245, 230, 211, 0.5);
+  --ink:rgb(0, 0, 0, 0.9);--muted:#000000;--brand:rgba(0,0,0,0.5);--tint:rgb(245, 230, 211, 0.5);
   --line:rgba(255, 255, 255, 0.1);
   --ok:#15803d;--warn:#b45309;--bad:#b42318;
   --r:20px;                     
