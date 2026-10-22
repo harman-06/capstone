@@ -6,7 +6,7 @@
   --surface:rgba(255,255,255,0.23);     /* frosted glass surface */
   --surface-solid:#ffffff;
   --topbar:rgba(255,255,255,0.55);
-  --ink:#89c8d6;--muted:#000000;--brand:rgba(157, 188, 199, 0.25);--tint:#dff1f5;
+  --ink:rgb(94, 120, 130);--muted:#000000;--brand:rgba(143, 171, 181, 0.25);--tint:#fce5c5;
   --line:rgba(0, 0, 0, 0.14);
   --ok:#15803d;--warn:#b45309;--bad:#b42318;
   --r:20px;                     /* soft rounded corners for neumorphism */
