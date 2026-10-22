@@ -60,7 +60,7 @@ h1{margin:0 0 4px;font-size:26px}h3{margin:0 0 6px}
   backdrop-filter: blur(var(--blur));
   -webkit-backdrop-filter: blur(var(--blur));
   background:var(--surface);
-  border:3px solid rgba(255,255,255,0.4);
+  border:2px solid rgba(255,255,255,0.4);
   border-radius:var(--r);
   padding:16px;margin-bottom:16px;
   box-shadow: var(--shadow-soft);
@@ -115,10 +115,7 @@ body.clock-visible #clock{opacity:1;transform:none}
 .patient-profile { display:grid; gap:16px; }
 .patient-banners { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
 .patient-banners .banner { margin:0; }
-.patient-squares { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-@media(min-width:761px){
-  .patient-squares .card { aspect-ratio:1/1; overflow:auto; }
-}
+.patient-squares { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
 @media(max-width:760px){
   .patient-banners { grid-template-columns:1fr; }
   .patient-squares { grid-template-columns:1fr; }
@@ -131,6 +128,7 @@ body.clock-visible #clock{opacity:1;transform:none}
     {background:rgba(253,236,234,0.8);
      backdrop-filter:blur(var(--blur));
      color:var(--bad);
+     border-radius: 9999px;
      display:flexfont-weight:600}
 .tabs{display:flex;gap:6px;margin:12px 0;background:var(--surface);backdrop-filter:blur(var(--blur));border-radius:14px;padding:4px;width:fit-content;box-shadow:var(--shadow-soft)}
 .tabs a{padding:6px 14px;border-radius:10px;text-decoration:none;color:var(--ink)}.tabs a.on{background:var(--brand);color:#fff}
