@@ -62,66 +62,79 @@ function ageLine(p) {
   return `${years} yrs (${dob.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })})`;
 }
 
+// Picks the first appointment on file for this patient to show as a
+// preview. Note: appointment "when" values are display strings, not real
+// dates, so this isn't a true chronological sort — it's whichever
+// appointment is first in the list (newly booked ones are added to the front).
+function nextAppointmentPreview(p) {
+  const [next] = getAppointments(p.id);
+  if (!next) return '<p class="muted">Nothing scheduled.</p>';
+  return `<div class="row"><b>${escapeHtml(next.when)}</b><span>${escapeHtml(next.type)}</span></div>`;
+}
+
 export function patientProfile(el, { params }) {
   const p = getPatient(params[0]);
   if (!p) return void (el.innerHTML = page('Patient not found', '<p class="muted">This patient doesn\'t exist or you don\'t have access.</p>'));
 
-  // ADDED (Harman): contact/ID/vitals quick-facts, notes (multi-author, can
-  // add a new one), medication schedule, documents/requisitions, providers,
-  // and a "Book a new appointment" button. Diagnoses/medications/allergy
-  // banner/appointments link are the original sections, kept as-is.
+  // CHANGED (Harman): banners side by side; appointments card moved up with
+  // a next-appointment preview; the remaining four cards shrunk into a 2x2
+  // grid (medication schedule + providers, documents/requisitions + notes).
   el.innerHTML = page(p.name, `
+    <div class="patient-profile">
 
-    <div class="banner">Diagnoses: <data-cap="patients.viewSensitive">${p.diagnoses.join(', ') || 'None recorded'}</div>
+      <div class="patient-banners">
+        <div class="banner" data-cap="patients.viewSensitive">Diagnoses: ${p.diagnoses.join(', ') || 'None recorded'}</div>
+        <div class="banner">Medications: ${p.meds.map(m => `<a data-cap="inventory.view" data-fallback="text" href="#/inventory?tab=medicine&item=${m.itemId}">${m.name}</a>`).join(', ') || 'None'}</div>
+        <div class="banner">Allergies: ${p.allergies.join(', ') || 'None recorded'}</div>
+      </div>
 
-    <div class="banner">Medications: ${p.meds.map(m => `<data-cap="inventory.view" data-fallback="text" href="#/inventory?tab=medicine&item=${m.itemId}">${m.name}</a>`).join('') || '<p class="muted">None.</p>'}
-    </div>
+      <div class="card" data-cap="patients.viewSensitive">
+        <h3>Patient details</h3>
+        <dl class="item-facts">
+          <div><dt>Medical ID</dt><dd>${escapeHtml(p.medicalId) || '—'}</dd></div>
+          <div><dt>Date of birth / age</dt><dd>${ageLine(p)}</dd></div>
+          <div><dt>Height</dt><dd>${p.heightCm ? p.heightCm + ' cm' : '—'}</dd></div>
+          <div><dt>Weight</dt><dd>${p.weightKg ? p.weightKg + ' kg' : '—'}</dd></div>
+          <div><dt>Phone</dt><dd>${escapeHtml(p.contact?.phone) || '—'}</dd></div>
+          <div><dt>Email</dt><dd>${escapeHtml(p.contact?.email) || '—'}</dd></div>
+          <div><dt>Address</dt><dd>${escapeHtml(p.contact?.address) || '—'}</dd></div>
+        </dl>
+      </div>
 
-    <div class="banner">Allergies: ${p.allergies.join(', ') || 'None recorded'}</div>
+      <div class="card">
+        <h3>Upcoming appointments</h3>
+        ${nextAppointmentPreview(p)}
+        <p><a href="#/appointments?patient=${p.id}">Expand</a> · <button id="book-appt-btn" type="button" data-cap="appointments.view">Book a new appointment</button></p>
+      </div>
 
-    <div class="card" data-cap="patients.viewSensitive">
-      <h3>Patient details</h3>
-      <dl class="item-facts">
-        <div><dt>Medical ID</dt><dd>${escapeHtml(p.medicalId) || '—'}</dd></div>
-        <div><dt>Date of birth / age</dt><dd>${ageLine(p)}</dd></div>
-        <div><dt>Height</dt><dd>${p.heightCm ? p.heightCm + ' cm' : '—'}</dd></div>
-        <div><dt>Weight</dt><dd>${p.weightKg ? p.weightKg + ' kg' : '—'}</dd></div>
-        <div><dt>Phone</dt><dd>${escapeHtml(p.contact?.phone) || '—'}</dd></div>
-        <div><dt>Email</dt><dd>${escapeHtml(p.contact?.email) || '—'}</dd></div>
-        <div><dt>Address</dt><dd>${escapeHtml(p.contact?.address) || '—'}</dd></div>
-      </dl>
-    </div>
+      <div class="patient-squares">
+        <div class="card" data-cap="patients.viewSensitive">
+          <h3>Medication schedule</h3>
+          ${(p.medicationSchedule ?? []).map(s => `<div class="row"><b>${escapeHtml(s.time)}</b><span>${escapeHtml(s.med)} — ${escapeHtml(s.route)}</span></div>`).join('') || '<p class="muted">Nothing scheduled.</p>'}
+        </div>
 
-    <div class="card" data-cap="patients.viewSensitive">
-      <h3>Medication schedule</h3>
-      ${(p.medicationSchedule ?? []).map(s => `<div class="row"><b>${escapeHtml(s.time)}</b><span>${escapeHtml(s.med)} — ${escapeHtml(s.route)}</span></div>`).join('') || '<p class="muted">Nothing scheduled.</p>'}
-    </div>
+        <div class="card" data-cap="patients.viewSensitive">
+          <h3>Primary providers</h3>
+          ${(p.providers ?? []).map(pr => `<div class="row"><b>${escapeHtml(pr.name)}</b><span>${escapeHtml(pr.role)} · ${escapeHtml(pr.org)}</span></div>`).join('') || '<p class="muted">None recorded.</p>'}
+        </div>
 
-    <div class="card" data-cap="patients.viewSensitive">
-      <h3>Primary providers</h3>
-      ${(p.providers ?? []).map(pr => `<div class="row"><b>${escapeHtml(pr.name)}</b><span>${escapeHtml(pr.role)} · ${escapeHtml(pr.org)}</span></div>`).join('') || '<p class="muted">None recorded.</p>'}
-    </div>
+        <div class="card" data-cap="patients.viewSensitive">
+          <h3>Documents &amp; requisitions</h3>
+          ${(p.documents ?? []).map(d => `<div class="row"><span>${escapeHtml(d.name)}</span><span class="muted">${escapeHtml(d.date)}</span></div>`).join('')}
+          ${(p.requisitions ?? []).map(r => `<div class="row"><span>${escapeHtml(r.name)}</span><span class="muted">${escapeHtml(r.status)} · ${escapeHtml(r.date)}</span></div>`).join('')}
+          ${!(p.documents?.length || p.requisitions?.length) ? '<p class="muted">Nothing on file.</p>' : ''}
+        </div>
 
-    <div class="card" data-cap="patients.viewSensitive">
-      <h3>Documents &amp; requisitions</h3>
-      ${(p.documents ?? []).map(d => `<div class="row"><span>${escapeHtml(d.name)}</span><span class="muted">${escapeHtml(d.date)}</span></div>`).join('')}
-      ${(p.requisitions ?? []).map(r => `<div class="row"><span>${escapeHtml(r.name)}</span><span class="muted">${escapeHtml(r.status)} · ${escapeHtml(r.date)}</span></div>`).join('')}
-      ${!(p.documents?.length || p.requisitions?.length) ? '<p class="muted">Nothing on file.</p>' : ''}
-    </div>
+        <div class="card" data-cap="patients.viewSensitive">
+          <h3>Notes</h3>
+          <div id="patient-notes">${renderNotes(p)}</div>
+          <form id="add-note-form">
+            <label>Add a note <textarea name="text" rows="2" required placeholder="Visible to all staff who can view this patient"></textarea></label>
+            <button type="submit">Add note</button>
+          </form>
+        </div>
+      </div>
 
-    <div class="card" data-cap="patients.viewSensitive">
-      <h3>Notes</h3>
-      <div id="patient-notes">${renderNotes(p)}</div>
-      <form id="add-note-form">
-        <label>Add a note <textarea name="text" rows="2" required placeholder="Visible to all staff who can view this patient"></textarea></label>
-        <button type="submit">Add note</button>
-      </form>
-    </div>
-
-    <div class="card">
-      <h3>Upcoming appointments</h3>
-      <a href="#/appointments?patient=${p.id}">Expand</a>
-      <p><button id="book-appt-btn" type="button" data-cap="appointments.view">Book a new appointment</button></p>
     </div>`);
 
   el.querySelector('#book-appt-btn')?.addEventListener('click', () => openBookAppointmentModal(() => patientProfile(el, { params }), p.id));
