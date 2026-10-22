@@ -6,7 +6,7 @@
   --surface:rgba(255,255,255,0.23);     /* frosted glass surface */
   --surface-solid:#ffffff;
   --topbar:rgba(255,255,255,0.55);
-  --ink:#ffffff;--muted:#000000;--brand: #9aaeb5;--tint:#f5ede1;
+  --ink:#000000;--muted:#000000;--brand: #ffffff;--tint:#f5ede1;
   --line:rgba(255, 255, 255, 0.1);
   --ok:#15803d;--warn:#b45309;--bad:#b42318;
   --r:20px;                     /* soft rounded corners for neumorphism */
@@ -35,7 +35,14 @@ a{color:var(--brand)}
   position:sticky;top:0;z-index:5;
   box-shadow: 0 4px 24px rgba(23,48,71,0.08);
 }
-.brand{font-weight:700;text-decoration:none}.spacer{flex:1}
+.brand
+  {font-weight:700;
+   text-decoration:none
+  .grow-on-hover {
+    transition: transform 0.3s ease-in-out;
+    .grow-on-hover:hover {
+    transform: scale(1.1); 
+  } }.spacer{flex:1}
 #menu-btn{border:0;background:none;font-size:20px;cursor:pointer}
 .layout{display:flex;min-height:calc(100vh - 53px)}
 #sidebar{
