@@ -60,7 +60,7 @@ h1{margin:0 0 4px;font-size:26px}h3{margin:0 0 6px}
   backdrop-filter: blur(var(--blur));
   -webkit-backdrop-filter: blur(var(--blur));
   background:var(--surface);
-  border:6px solid rgba(255,255,255,0.4);
+  border:3px solid rgba(255,255,255,0.4);
   border-radius:var(--r);
   padding:16px;margin-bottom:16px;
   box-shadow: var(--shadow-soft);
@@ -109,6 +109,20 @@ body.clock-visible #clock{opacity:1;transform:none}
 .sev-warn{color:var(--warn)}.sev-bad{color:var(--bad)}
 
 @media(max-width:760px){.dash{grid-template-columns:1fr}}
+
+/* ADDED (Harman): Patient Profile layout — banners row, then full-width
+   details, then the appointment preview, then a 2x2 grid of smaller cards. */
+.patient-profile { display:grid; gap:16px; }
+.patient-banners { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.patient-banners .banner { margin:0; }
+.patient-squares { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media(min-width:761px){
+  .patient-squares .card { aspect-ratio:1/1; overflow:auto; }
+}
+@media(max-width:760px){
+  .patient-banners { grid-template-columns:1fr; }
+  .patient-squares { grid-template-columns:1fr; }
+}
 
 /* STEP 2 helpers + STEP 5 pages */
 .locked{opacity:.55;cursor:not-allowed}.locked::after{content:" 🔒"}
