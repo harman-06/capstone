@@ -1,6 +1,6 @@
 // STEP 5: placeholder pages with the deep links already wired (?patient=, ?unit=, ?tab=&item=).
 import { ROLES, session, applyPermissions } from '../roles.js';
-import { getPatients, getPatient, getAppointments, getInventory, addPatientNote, addAppointment, addRequestLogEntry, getRequestLog, myUnit, canDecideTransfer, acceptTransfer, rejectTransfer, getQcItems, qualityCheckState, recordQualityCheck, QC_WINDOW_HOURS } from '../data.js';
+import { getPatients, getPatient, getAppointments, getInventory, addPatientNote, addAppointment, addRequestLogEntry, getRequestLog, myUnit, canDecideTransfer, acceptTransfer, rejectTransfer, getRequestsForMe, getQcItems, qualityCheckState, recordQualityCheck, QC_WINDOW_HOURS } from '../data.js';
 import { openModal } from '../modal.js';
 const page = (title, body) => `<h1>${title}</h1>${body}`;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -239,7 +239,7 @@ export function inventory(el, { query }) {
 // (or anyone allowed by canDecideTransfer in data.js) sees Accept / Reject
 // on pending transfers whose source unit is their own unit.
 export function requests(el) {
-  const log = getRequestLog();
+  const log = getRequestsForMe();   // SPRINT 2: unit clerks only see their own unit's requests
   const badgeClass = s => /completed|approved/.test(s) ? 'available' : s === 'rejected' ? 'out' : 'low';
   const rows = log.map(r => `<tr>
     <td>${r.createdAt.toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td>
