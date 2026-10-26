@@ -6,7 +6,7 @@ export const ROLES = {
   doctor:      { label:'Doctor', user:'Dr. Smith', scope:'all', dashboard:STAFF_DASH,
                  caps:[...CLINICAL,'patients.viewSensitive','meds.prescribe','transfers.request','transfers.approve'] },
   chargeNurse: { label:'Charge nurse', user:'Nadia Ali', scope:'unit', dashboard:STAFF_DASH,
-                 caps:[...CLINICAL,'transfers.request','transfers.approve'],
+                 caps:[...CLINICAL,'transfers.request','transfers.approve','equipment.qc'],
                  approval:['meds.administerControlled'], masked:['patients.viewSensitive'] },
   nurse:       { label:'Nurse', user:'Eli Brown', scope:'unit', dashboard:STAFF_DASH,
                  caps:[...CLINICAL,'transfers.request'],
