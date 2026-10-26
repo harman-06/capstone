@@ -280,3 +280,23 @@ export function recordQualityCheck(id) {
   item.qcBy = ROLES[session.role].user;
   return item;
 }
+
+// Requests the current user is allowed to see on the Requests page.
+// Unit clerks (roles with their own `unit`) only see transfers that involve
+// their unit (as the source or as the requester), plus anything they raised.
+// Every other role sees the full log, as before.
+// NOTE: this only hides rows in the browser. Real protection needs Supabase
+// row-level security (database teammate).
+export function getRequestsForMe() {
+  const role = ROLES[session.role];
+  if (!role.unit) return requestLog;
+  const unit = role.unit;
+  return requestLog.filter(r =>
+    r.requestedBy === role.user ||
+    (r.type === 'transfer' && (
+      r.sourceUnit === unit ||
+      r.requestingUnit === unit ||
+      db.inventory.find(i => i.id === r.itemId)?.unit === unit
+    ))
+  );
+}
