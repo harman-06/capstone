@@ -159,4 +159,60 @@ export function updateRequestStatus(id, status) {
   if (r) r.status = status;
   return r;
 }
- 
+
+// ============================================================================
+// SPRINT 2 — unit clerk accept / reject of equipment transfer requests.
+// Still IN-MEMORY ONLY. These checks run in the browser, so they demonstrate
+// the workflow but do not secure it; real enforcement needs the Supabase
+// access rules (database teammate).
+// ============================================================================
+
+// The unit the current user works in. A role can carry its own `unit`
+// (e.g. the Unit clerk in roles.js); otherwise fall back to the session unit.
+export const myUnit = () => ROLES[session.role].unit ?? session.unit;
+
+// Can the current user accept/reject this request right now?
+// Rules: it is a pending transfer, the user has transfers.approve, the request
+// names the user's own unit as the source, and the user did not raise it.
+// (To let doctors accept for any unit, add: || ROLES[session.role].scope === 'all')
+export function canDecideTransfer(request) {
+  if (!request || request.type !== 'transfer' || request.status !== 'pending') return false;
+  if (can('transfers.approve') !== 'allow') return false;
+  if (request.sourceUnit !== myUnit()) return false;
+  if (request.requestedBy === ROLES[session.role].user) return false;
+  return true;
+}
+
+// Accept: moves stock from the source unit's item to the requesting unit's
+// item, then marks the request approved. Returns { ok, reason?, request? }.
+export function acceptTransfer(id) {
+  const r = requestLog.find(x => x.id === id);
+  if (!r) return { ok: false, reason: 'Request not found.' };
+  if (!canDecideTransfer(r)) return { ok: false, reason: 'You cannot accept this request.' };
+  const from = db.inventory.find(i => i.id === r.sourceItemId);
+  // Item-page requests: itemId is the row that receives the stock.
+  // List-button requests: itemId equals sourceItemId, so the receiving row is
+  // the same item in the requesting unit (matched by name).
+  const to = r.itemId !== r.sourceItemId
+    ? db.inventory.find(i => i.id === r.itemId)
+    : db.inventory.find(i => i.type === from?.type && i.name === r.item && i.unit === r.requestingUnit);
+  if (!from || !to) return { ok: false, reason: 'Could not find the items for this request.' };
+  if (from.qty < r.quantity) return { ok: false, reason: `Only ${from.qty} left in ${from.unit}.` };
+  adjustInventoryQty(from.id, -r.quantity);
+  adjustInventoryQty(to.id, r.quantity);
+  r.decidedBy = ROLES[session.role].user;
+  r.decidedAt = new Date();
+  updateRequestStatus(id, 'approved');
+  return { ok: true, request: r };
+}
+
+// Reject: no stock moves, the request is marked rejected.
+export function rejectTransfer(id) {
+  const r = requestLog.find(x => x.id === id);
+  if (!r) return { ok: false, reason: 'Request not found.' };
+  if (!canDecideTransfer(r)) return { ok: false, reason: 'You cannot reject this request.' };
+  r.decidedBy = ROLES[session.role].user;
+  r.decidedAt = new Date();
+  updateRequestStatus(id, 'rejected');
+  return { ok: true, request: r };
+}
