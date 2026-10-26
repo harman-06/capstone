@@ -16,7 +16,11 @@ export const ROLES = {
   // and accept/reject requests that name their own unit as the source.
   // The "own unit only" rule is enforced on the Requests page, not here.
   // (The user name is a placeholder; change it to match your demo data.)
-  unitClerk:   { label:'Unit clerk', user:'Maya Chen', unit:'Emergency', scope:'unit', dashboard:['greeting','notifications'],
+  unitClerk:   { label:'Unit clerk (Emergency)', user:'Maya Chen', unit:'Emergency', scope:'unit', dashboard:['greeting','notifications'],
+                 caps:['inventory.view','inventory.update','requests.view','transfers.request','transfers.approve'] },
+  // Second clerk so you can show that each unit only sees its own requests.
+  // (The user name is a placeholder; change it to match your demo data.)
+  unitClerkCard: { label:'Unit clerk (Cardiology)', user:'Omar Patel', unit:'Cardiology', scope:'unit', dashboard:['greeting','notifications'],
                  caps:['inventory.view','inventory.update','requests.view','transfers.request','transfers.approve'] },
   admin:       { label:'IT admin', user:'Sam Lee', scope:'none', dashboard:['greeting','notifications'],
                  caps:['inventory.view','users.manage'] },
