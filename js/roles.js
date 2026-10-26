@@ -14,6 +14,8 @@ export const ROLES = {
   // SPRINT 2: Unit clerk. Manages equipment for ONE unit (set by `unit` below).
   // No patient or appointment access. Can request equipment from other units
   // and accept/reject requests that name their own unit as the source.
+  // The "own unit only" rule is enforced on the Requests page, not here.
+  // (The user name is a placeholder; change it to match your demo data.)
   unitClerk:   { label:'Unit clerk', user:'Maya Chen', unit:'Emergency', scope:'unit', dashboard:['greeting','notifications'],
                  caps:['inventory.view','inventory.update','requests.view','transfers.request','transfers.approve'] },
   admin:       { label:'IT admin', user:'Sam Lee', scope:'none', dashboard:['greeting','notifications'],
