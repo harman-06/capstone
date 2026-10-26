@@ -1,6 +1,6 @@
 // STEP 5: placeholder pages with the deep links already wired (?patient=, ?unit=, ?tab=&item=).
-import { ROLES, session } from '../roles.js';
-import { getPatients, getPatient, getAppointments, getInventory, addPatientNote, addAppointment, addRequestLogEntry, getRequestLog, myUnit, canDecideTransfer, acceptTransfer, rejectTransfer } from '../data.js';
+import { ROLES, session, applyPermissions } from '../roles.js';
+import { getPatients, getPatient, getAppointments, getInventory, addPatientNote, addAppointment, addRequestLogEntry, getRequestLog, myUnit, canDecideTransfer, acceptTransfer, rejectTransfer, getQcItems, qualityCheckState, recordQualityCheck, QC_WINDOW_HOURS } from '../data.js';
 import { openModal } from '../modal.js';
 const page = (title, body) => `<h1>${title}</h1>${body}`;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -173,10 +173,25 @@ export function inventory(el, { query }) {
     <td>${i.unit}${i.unitNo ? ` <span class="muted">(${i.unitNo})</span>` : ''}</td><td>${i.qty}</td><td><span class="badge ${i.status}">${i.status}</span></td>
     <td>${i.unit !== myUnit() ? `<button data-cap="transfers.request" data-request-item="${escapeHtml(i.id)}">Request</button>` : ''}</td></tr>`).join('');
   const units = [...new Set(getInventory().filter(i => i.type === tab).map(i => i.unit))].sort();
+  // SPRINT 2: BGM quality-check panel. Only users with the equipment.qc
+  // capability (charge nurse) see it; applyPermissions removes it for others.
+  // BGMs that are overdue or never checked are listed first.
+  const qcItems = (tab === 'equipment' ? getQcItems() : [])
+    .sort((a, b) => Number(qualityCheckState(a).ok) - Number(qualityCheckState(b).ok));
+  const qcDone = qcItems.filter(i => qualityCheckState(i).ok).length;
+  const qcRows = qcItems.map(i => {
+    const s = qualityCheckState(i);
+    return `<tr><td><a href="#/inventory/${escapeHtml(i.id)}">${escapeHtml(i.name)}</a></td><td>${escapeHtml(i.unit)}</td><td><span class="badge ${s.ok ? 'available' : 'out'}">${escapeHtml(s.label)}</span></td><td>${escapeHtml(i.qcBy) || '—'}</td><td><button type="button" data-qc="${escapeHtml(i.id)}">Record check</button></td></tr>`;
+  }).join('');
+  const qcCard = qcItems.length ? `<div class="card" data-cap="equipment.qc">
+    <h3>BGM quality checks</h3>
+    <p class="muted">Each BGM needs a quality check every ${QC_WINDOW_HOURS} hours. ${qcDone} of ${qcItems.length} checked in the last ${QC_WINDOW_HOURS} hours.</p>
+    <table><thead><tr><th scope="col">BGM</th><th scope="col">Unit</th><th scope="col">Quality check</th><th scope="col">Last checked by</th><th scope="col">Action</th></tr></thead><tbody>${qcRows}</tbody></table>
+  </div>` : '';
   el.innerHTML = page('Inventory', `<div class="tabs"><a class="${tab === 'equipment' ? 'on' : ''}" href="#/inventory?tab=equipment">Equipment</a><a class="${tab === 'medicine' ? 'on' : ''}" href="#/inventory?tab=medicine">Medicine</a></div>
     <p class="muted">Find items and check stock across units. Medicine is sample data.</p>
     <div class="inventory-tools"><label>Search items<input id="inventory-search" type="search" placeholder="Search by item name"></label><label>Unit<select id="inventory-unit"><option value="">All units</option>${units.map(u => `<option value="${escapeHtml(u)}">${escapeHtml(u)}</option>`).join('')}</select></label><span id="inventory-count" class="muted" role="status"></span></div>
-    <div class="card"><table><thead><tr><th scope="col">Item</th><th scope="col">Unit</th><th scope="col">Quantity</th><th scope="col">Availability</th><th scope="col">Action</th></tr></thead><tbody>${rows}</tbody></table><p id="inventory-empty" class="empty-state" hidden>No items match your filters.</p></div>`);
+    <div class="card"><table><thead><tr><th scope="col">Item</th><th scope="col">Unit</th><th scope="col">Quantity</th><th scope="col">Availability</th><th scope="col">Action</th></tr></thead><tbody>${rows}</tbody></table><p id="inventory-empty" class="empty-state" hidden>No items match your filters.</p></div>${qcCard}`);
   const search = el.querySelector('#inventory-search');
   const unit = el.querySelector('#inventory-unit');
   const filter = () => {
@@ -192,6 +207,11 @@ export function inventory(el, { query }) {
   unit.addEventListener('change', filter);
   filter();
   el.querySelector('.hl')?.scrollIntoView({ block: 'center' });
+  el.querySelectorAll('[data-qc]').forEach(button => button.addEventListener('click', () => {
+    recordQualityCheck(button.dataset.qc);
+    inventory(el, { query });      // redraw so the status updates
+    applyPermissions(el);          // redraw skips the router, so re-apply role rules
+  }));
   el.querySelectorAll('[data-request-item]').forEach(button => {
     // CHANGED (Harman): this quick "Request" button (for an item not in the
     // user's own unit) now actually logs a transfer request so it shows up
