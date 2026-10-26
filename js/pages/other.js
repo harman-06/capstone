@@ -1,6 +1,6 @@
 // STEP 5: placeholder pages with the deep links already wired (?patient=, ?unit=, ?tab=&item=).
 import { ROLES, session } from '../roles.js';
-import { getPatients, getPatient, getAppointments, getInventory, addPatientNote, addAppointment, addRequestLogEntry, getRequestLog } from '../data.js';
+import { getPatients, getPatient, getAppointments, getInventory, addPatientNote, addAppointment, addRequestLogEntry, getRequestLog, myUnit, canDecideTransfer, acceptTransfer, rejectTransfer } from '../data.js';
 import { openModal } from '../modal.js';
 const page = (title, body) => `<h1>${title}</h1>${body}`;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -166,10 +166,12 @@ export function inventory(el, { query }) {
   const tab = query.tab || 'equipment';
   // CHANGED (Harman): item name now links to the new #/inventory/:id detail
   // page (see pages/inventory-item.js) instead of being plain text.
+  // SPRINT 2: the Request button now compares against myUnit() (the Unit
+  // clerk's own unit) instead of session.unit; other roles are unchanged.
   const rows = getInventory().filter(i => i.type === tab).map(i => `<tr data-inventory-row data-name="${escapeHtml(i.name.toLowerCase())}" data-unit="${escapeHtml(i.unit)}" class="${i.id === query.item ? 'hl' : ''}">
     <td><a href="#/inventory/${escapeHtml(i.id)}">${i.name}</a>${i.requiresApproval ? ' <span class="approval-marker" tabindex="0">⚠<span class="approval-tooltip">Requires a doctor\'s approval to administer.</span></span>' : ''}</td>
     <td>${i.unit}${i.unitNo ? ` <span class="muted">(${i.unitNo})</span>` : ''}</td><td>${i.qty}</td><td><span class="badge ${i.status}">${i.status}</span></td>
-    <td>${i.unit !== session.unit ? `<button data-cap="transfers.request" data-request-item="${escapeHtml(i.id)}">Request</button>` : ''}</td></tr>`).join('');
+    <td>${i.unit !== myUnit() ? `<button data-cap="transfers.request" data-request-item="${escapeHtml(i.id)}">Request</button>` : ''}</td></tr>`).join('');
   const units = [...new Set(getInventory().filter(i => i.type === tab).map(i => i.unit))].sort();
   el.innerHTML = page('Inventory', `<div class="tabs"><a class="${tab === 'equipment' ? 'on' : ''}" href="#/inventory?tab=equipment">Equipment</a><a class="${tab === 'medicine' ? 'on' : ''}" href="#/inventory?tab=medicine">Medicine</a></div>
     <p class="muted">Find items and check stock across units. Medicine is sample data.</p>
@@ -194,9 +196,16 @@ export function inventory(el, { query }) {
     // CHANGED (Harman): this quick "Request" button (for an item not in the
     // user's own unit) now actually logs a transfer request so it shows up
     // on the Requests page, instead of just linking there with no record.
+    // SPRINT 2: the entry now records which unit it is requested from
+    // (sourceItemId, sourceUnit) and which unit is asking (requestingUnit),
+    // so that unit's clerk can accept or reject it on the Requests page.
     button.addEventListener('click', () => {
       const item = getInventory().find(i => i.id === button.dataset.requestItem);
-      if (item) addRequestLogEntry({ type: 'transfer', item: item.name, itemId: item.id, quantity: 1, requestedBy: ROLES[session.role].user, status: 'pending' });
+      if (item) addRequestLogEntry({
+        type: 'transfer', item: item.name, itemId: item.id,
+        sourceItemId: item.id, sourceUnit: item.unit, requestingUnit: myUnit(),
+        quantity: 1, requestedBy: ROLES[session.role].user, status: 'pending',
+      });
       location.hash = '#/requests?item=' + encodeURIComponent(button.dataset.requestItem);
     });
   });
@@ -206,22 +215,39 @@ export function inventory(el, { query }) {
 // transfer request from the Inventory list and every administer request
 // from an item's detail page (js/pages/inventory-item.js) — instead of a
 // single-item lookup with no real record of anything.
+// SPRINT 2: added a "From unit" column and an Action column. A unit clerk
+// (or anyone allowed by canDecideTransfer in data.js) sees Accept / Reject
+// on pending transfers whose source unit is their own unit.
 export function requests(el) {
   const log = getRequestLog();
+  const badgeClass = s => /completed|approved/.test(s) ? 'available' : s === 'rejected' ? 'out' : 'low';
   const rows = log.map(r => `<tr>
     <td>${r.createdAt.toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td>
     <td>${r.type === 'administer' ? 'Administer' : 'Transfer'}</td>
     <td>${escapeHtml(r.item)}${r.quantity ? ` × ${r.quantity}` : ''}</td>
+    <td>${escapeHtml(r.sourceUnit) || '—'}</td>
     <td>${escapeHtml(r.patientName) || '—'}</td>
     <td>${escapeHtml(r.requestedBy)}</td>
-    <td><span class="badge ${r.status.includes('completed') ? 'available' : 'low'}">${escapeHtml(r.status)}</span></td>
+    <td><span class="badge ${badgeClass(r.status)}">${escapeHtml(r.status)}</span>${r.decidedBy ? ` <span class="muted">by ${escapeHtml(r.decidedBy)}</span>` : ''}</td>
+    <td>${canDecideTransfer(r) ? `<button type="button" data-accept="${escapeHtml(r.id)}">Accept</button> <button type="button" data-reject="${escapeHtml(r.id)}">Reject</button>` : ''}</td>
   </tr>`).join('');
   el.innerHTML = page('Requests and approvals', `
     <div class="card">
-      ${log.length ? `<table><thead><tr><th>When</th><th>Type</th><th>Item</th><th>Patient</th><th>Requested by</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`
+      ${log.length ? `<table><thead><tr><th>When</th><th>Type</th><th>Item</th><th>From unit</th><th>Patient</th><th>Requested by</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table>`
         : '<p class="muted">No requests yet this session. Use the Request button on an Inventory item to create one.</p>'}
     </div>
     <p><a href="#/inventory">← Back to Inventory</a></p>`);
+
+  el.querySelectorAll('[data-accept]').forEach(button => button.addEventListener('click', () => {
+    const result = acceptTransfer(button.dataset.accept);
+    if (!result.ok) alert(result.reason);
+    requests(el);
+  }));
+  el.querySelectorAll('[data-reject]').forEach(button => button.addEventListener('click', () => {
+    const result = rejectTransfer(button.dataset.reject);
+    if (!result.ok) alert(result.reason);
+    requests(el);
+  }));
 }
 export const users = soon('Users');
 export const notFound = soon('Page not found');
