@@ -11,6 +11,11 @@ export const ROLES = {
   nurse:       { label:'Nurse', user:'Eli Brown', scope:'unit', dashboard:STAFF_DASH,
                  caps:[...CLINICAL,'transfers.request'],
                  approval:['meds.administerControlled'], masked:['patients.viewSensitive'] },
+  // SPRINT 2: Unit clerk. Manages equipment for ONE unit (set by `unit` below).
+  // No patient or appointment access. Can request equipment from other units
+  // and accept/reject requests that name their own unit as the source.
+  unitClerk:   { label:'Unit clerk', user:'Maya Chen', unit:'Emergency', scope:'unit', dashboard:['greeting','notifications'],
+                 caps:['inventory.view','inventory.update','requests.view','transfers.request','transfers.approve'] },
   admin:       { label:'IT admin', user:'Sam Lee', scope:'none', dashboard:['greeting','notifications'],
                  caps:['inventory.view','users.manage'] },
   patient:     { label:'Patient', user:'Ron Simpson', scope:'self', patientId:'p1',
