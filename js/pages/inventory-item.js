@@ -14,12 +14,43 @@
 //   4. Either way, the result is recorded: inventory quantity decreases, a
 //      note is added to the patient's chart automatically, and an entry
 //      appears on the Requests page.
+//
+// SPRINT 2 ADDITION (cross-unit availability): equipment items now show which
+// other units hold the same item, and the equipment request modal lets the
+// user choose which unit to request from. The chosen unit is saved on the
+// request log entry (sourceItemId, sourceUnit).
 import { ROLES, session, can, requestApproval } from '../roles.js';
-import { getInventoryItem, getPatients, adjustInventoryQty, addPatientNote, addRequestLogEntry } from '../data.js';
+import { getInventoryItem, getInventory, getUnits, getPatients, adjustInventoryQty, addPatientNote, addRequestLogEntry } from '../data.js';
 import { openModal } from '../modal.js';
 
 const page = (title, body) => `<h1>${title}</h1>${body}`;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+// --- Sprint 2: cross-unit availability helpers ------------------------------
+
+// "Unit name (unit number)" label; the number is looked up from the units list
+// because raw inventory rows don't always carry it.
+const unitLabel = i => {
+  const n = getUnits().find(u => u.name === i.unit)?.number;
+  return `${escapeHtml(i.unit)}${n ? ` (${escapeHtml(n)})` : ''}`;
+};
+
+// Same equipment held by other units, matched by name.
+function renderOtherUnits(item) {
+  const others = getInventory().filter(i => i.name === item.name && i.id !== item.id);
+  if (!others.length) return '<p class="muted">No other unit holds this item.</p>';
+  return others.map(i => `
+    <div class="row">
+      <span>${unitLabel(i)}: ${i.qty} on hand</span>
+      <span class="badge ${i.status}">${escapeHtml(i.status)}</span>
+    </div>`).join('');
+}
+
+// Other units that can actually supply the item (stock above 0, not 'out').
+const getUnitOptions = item =>
+  getInventory().filter(i => i.name === item.name && i.id !== item.id && i.qty > 0 && i.status !== 'out');
+
+// ----------------------------------------------------------------------------
 
 export function inventoryItem(el, { params }) {
   const item = getInventoryItem(params[0]);
@@ -48,6 +79,10 @@ export function inventoryItem(el, { params }) {
       <button id="request-btn" type="button">Request</button>
     </div>
     <div class="card">
+      <h3>Availability in other units</h3>
+      ${renderOtherUnits(item)}
+    </div>
+    <div class="card">
       <h3>Recent activity this session</h3>
       <p class="muted" id="activity-empty">Nothing recorded yet.</p>
       <div id="activity-list"></div>
@@ -72,22 +107,35 @@ function logActivity(el, activity, entry) {
     .map(a => `<div class="row"><span>${escapeHtml(a.summary)}</span><span class="muted">${escapeHtml(a.status)}</span></div>`).join('');
 }
 
-// Equipment: simple request-for-transfer, no patient/prerequisite involved.
+// Equipment: request-for-transfer from another unit, no patient/prerequisite involved.
+// Sprint 2: the user picks which unit to take the item from. Stock is not
+// changed here; the request stays 'pending' until an approver decides.
 function openTransferModal(item, el, activity) {
+  const sources = getUnitOptions(item);
+  if (!sources.length) { alert(`${item.name} is not available in any other unit right now.`); return; }
   openModal({
     title: `Request ${item.name}`,
     submitLabel: 'Submit request',
     bodyHtml: `
-      <label>Quantity <input name="quantity" type="number" min="1" max="${item.qty}" value="1" required></label>
-      <p class="muted">${item.qty} currently recorded at ${escapeHtml(item.unit)}.</p>`,
+      <label>Take from
+        <select name="source">
+          ${sources.map(s => `<option value="${escapeHtml(s.id)}">${unitLabel(s)}: ${s.qty} available</option>`).join('')}
+        </select>
+      </label>
+      <label>Quantity <input name="quantity" type="number" min="1" value="1" required></label>`,
     onSubmit(form) {
+      const source = sources.find(s => String(s.id) === form.source.value);
       const quantity = Number(form.quantity.value);
-      if (!quantity || quantity < 1 || quantity > item.qty) { alert('Enter a quantity between 1 and the available stock.'); return false; }
+      if (!source || !quantity || quantity < 1 || quantity > source.qty) {
+        alert('Enter a quantity between 1 and the stock in the chosen unit.');
+        return false;
+      }
       const record = addRequestLogEntry({
-        type: 'transfer', item: item.name, itemId: item.id, quantity,
-        requestedBy: ROLES[session.role].user, status: 'pending',
+        type: 'transfer', item: item.name, itemId: item.id,
+        sourceItemId: source.id, sourceUnit: source.unit,
+        quantity, requestedBy: ROLES[session.role].user, status: 'pending',
       });
-      logActivity(el, activity, { summary: `Requested ${quantity} × ${item.name}`, status: record.status });
+      logActivity(el, activity, { summary: `Requested ${quantity} × ${item.name} from ${source.unit}`, status: record.status });
     },
   });
 }
