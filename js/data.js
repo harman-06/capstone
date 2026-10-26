@@ -33,6 +33,7 @@ export async function reloadEquipment() {
   if (!isConfigured()) {
     db.inventory = demoInventory;
     db.units = await json('units');
+    addSprint2Equipment();
     source = 'Demo JSON — database not configured';
     return;
   }
@@ -44,6 +45,7 @@ export async function reloadEquipment() {
     if (!units.length) throw new Error('No units returned. Your account may not be provisioned, or demo data is missing.');
     db.inventory = [...inventory, ...db.inventory];
     db.units = units;
+    addSprint2Equipment();
     source = 'Live Supabase equipment · medicine/patients remain demo data';
   } catch (error) {
     source = `Database equipment unavailable: ${error.message}`;
@@ -215,4 +217,66 @@ export function rejectTransfer(id) {
   r.decidedAt = new Date();
   updateRequestStatus(id, 'rejected');
   return { ok: true, request: r };
+}
+
+// ============================================================================
+// SPRINT 2 — extra equipment (Stretcher, BGM) and BGM quality-check tracking.
+// These rows live in code for the demo (not in Supabase). They are added after
+// the normal equipment load, but NOT in the "live fetch failed" fallback, so
+// that fallback keeps its exact shape for tests/frontend.test.mjs.
+// Wheelchairs already exist in the equipment list, so they are not added here.
+// ============================================================================
+
+// Every BGM must pass a quality check at least this often.
+export const QC_WINDOW_HOURS = 24;
+
+// checkedHoursAgo is turned into a real timestamp when loaded, so the demo
+// always shows a mix of checked / overdue / never checked. null = never.
+const EXTRA_EQUIPMENT = [
+  { id: 'x-stretcher-card', name: 'Stretcher', type: 'equipment', unit: 'Cardiology', qty: 2, status: 'available', description: 'Patient transport stretcher.' },
+  { id: 'x-stretcher-emer', name: 'Stretcher', type: 'equipment', unit: 'Emergency', qty: 6, status: 'available', description: 'Patient transport stretcher.' },
+  { id: 'x-stretcher-onco', name: 'Stretcher', type: 'equipment', unit: 'Oncology', qty: 0, status: 'out', description: 'Patient transport stretcher.' },
+
+  { id: 'x-bgm-c01', name: 'Blood Glucose Monitor (BGM-C01)', type: 'equipment', unit: 'Cardiology', qty: 1, status: 'available', qcRequired: true, checkedHoursAgo: 3,  description: 'Blood glucose meter. Quality check required every 24 hours.' },
+  { id: 'x-bgm-c02', name: 'Blood Glucose Monitor (BGM-C02)', type: 'equipment', unit: 'Cardiology', qty: 1, status: 'available', qcRequired: true, checkedHoursAgo: 30, description: 'Blood glucose meter. Quality check required every 24 hours.' },
+  { id: 'x-bgm-e01', name: 'Blood Glucose Monitor (BGM-E01)', type: 'equipment', unit: 'Emergency',  qty: 1, status: 'available', qcRequired: true, checkedHoursAgo: 12, description: 'Blood glucose meter. Quality check required every 24 hours.' },
+  { id: 'x-bgm-e02', name: 'Blood Glucose Monitor (BGM-E02)', type: 'equipment', unit: 'Emergency',  qty: 1, status: 'available', qcRequired: true, checkedHoursAgo: 26, description: 'Blood glucose meter. Quality check required every 24 hours.' },
+  { id: 'x-bgm-e03', name: 'Blood Glucose Monitor (BGM-E03)', type: 'equipment', unit: 'Emergency',  qty: 1, status: 'available', qcRequired: true, checkedHoursAgo: null, description: 'Blood glucose meter. Quality check required every 24 hours.' },
+  { id: 'x-bgm-o01', name: 'Blood Glucose Monitor (BGM-O01)', type: 'equipment', unit: 'Oncology',   qty: 1, status: 'available', qcRequired: true, checkedHoursAgo: 5,  description: 'Blood glucose meter. Quality check required every 24 hours.' },
+];
+
+// Appends the extra rows to the inventory (skips any id that already exists).
+function addSprint2Equipment() {
+  const now = Date.now();
+  const rows = EXTRA_EQUIPMENT
+    .filter(extra => !db.inventory.some(i => i.id === extra.id))
+    .map(({ checkedHoursAgo, ...row }) => ({
+      ...row,
+      ...(row.qcRequired ? { lastQualityCheck: checkedHoursAgo == null ? null : now - checkedHoursAgo * 3600000 } : {}),
+    }));
+  db.inventory = [...db.inventory, ...rows];
+}
+
+// All items that need quality checks (the BGMs).
+export const getQcItems = () => db.inventory.filter(i => i.qcRequired);
+
+const hoursAgoText = h => (h < 1 ? 'under 1 h ago' : `${Math.floor(h)} h ago`);
+
+// { ok, label }: ok is true when the last check was inside the 24-hour window.
+export function qualityCheckState(item) {
+  if (!item.lastQualityCheck) return { ok: false, label: 'Never checked' };
+  const hours = (Date.now() - item.lastQualityCheck) / 3600000;
+  return hours < QC_WINDOW_HOURS
+    ? { ok: true, label: `Checked ${hoursAgoText(hours)}` }
+    : { ok: false, label: `Overdue (checked ${hoursAgoText(hours)})` };
+}
+
+// Records a quality check right now, by the signed-in user. Needs equipment.qc.
+export function recordQualityCheck(id) {
+  if (can('equipment.qc') !== 'allow') return null;
+  const item = db.inventory.find(i => i.id === id && i.qcRequired);
+  if (!item) return null;
+  item.lastQualityCheck = Date.now();
+  item.qcBy = ROLES[session.role].user;
+  return item;
 }
