@@ -225,9 +225,8 @@ h2 { letter-spacing:-.5px; } h3 { font-size:16px; }
 .card { padding:22px; border-radius:var(--r); box-shadow: var(--shadow-deep); overflow:auto; }
 .dash { gap:20px; }
 .dash .card { padding:14px 16px; }
-/*.greeting-bar { top:72px; margin-bottom:18px; padding:8px 0 16px; }*/
-.greeting-bar { margin-bottom: 6px; padding: 8px 0 6px; 
-
+.greeting-bar { top:72px; margin-bottom:18px; padding:8px 0 16px; }
+/*.greeting-bar { margin-bottom: 6px; padding: 8px 0 6px; */
 .greeting-bar h1 { letter-spacing:-1px; }
 .row { padding:12px 0; align-items:center; }
 .muted { font-size:14px; }
