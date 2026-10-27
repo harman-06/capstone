@@ -8,6 +8,7 @@
   --topbar:rgba(255,255,255,0.55);
   --ink:#000000;--muted:#000000;--brand:rgba(67, 107, 107, 0.7);--tint:rgb(245, 230, 211, 0.5);
   --line:rgba(255, 255, 255, 0);
+  --link:rgb(46, 74, 74);
   --ok:#15803d;--warn:#b45309;--bad:#b42318;
    /* -surface:rgba(255,255,255,0.23);     /* frosted glass surface
   --surface-solid:#ffffff;
@@ -30,7 +31,7 @@ body{
   background-attachment: fixed;
   color:var(--ink);
 }
-a{color:#d3e9ed80}
+a{color:var(--brand)}
 .topbar{
   display:flex;align-items:center;gap:12px;padding:10px 16px;
   background:var(--surface);
