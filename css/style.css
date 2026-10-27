@@ -219,13 +219,15 @@ body.nav-closed #sidebar { margin-left:-232px; }
 #sidebar a.active { box-shadow:inset 3px 0 var(--brand); }
 .nav-icon { width:18px; height:18px; flex:none; opacity:.8; }
 .nav-footer { margin-top:auto; padding:28px 12px 6px; color:var(--muted); font-size:11px; }
-main { padding:32px; max-width:1500px; }
+main { padding: 26px 32px 32px; max-width:1500px; }
 h1 { font-size:28px; letter-spacing:-.7px; margin-bottom:12px; }
 h2 { letter-spacing:-.5px; } h3 { font-size:16px; }
 .card { padding:22px; border-radius:var(--r); box-shadow: var(--shadow-deep); overflow:auto; }
 .dash { gap:20px; }
-.dash .card { padding:20px 22px; }
-.greeting-bar { top:72px; margin-bottom:18px; padding:8px 0 16px; }
+.dash .card { padding:14px 16px; }
+/*.greeting-bar { top:72px; margin-bottom:18px; padding:8px 0 16px; }*/
+.greeting-bar { margin-bottom: 6px; padding: 8px 0 6px; 
+
 .greeting-bar h1 { letter-spacing:-1px; }
 .row { padding:12px 0; align-items:center; }
 .muted { font-size:14px; }
