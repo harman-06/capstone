@@ -68,5 +68,33 @@ sw.onchange = () => {
   session.role = sw.value;
   if (location.hash === '#/dashboard' || !location.hash) refresh(); else location.hash = '#/dashboard';
 };
-document.getElementById('menu-btn').onclick = () => document.body.classList.toggle('nav-closed');
-if (innerWidth < 760) document.body.classList.add('nav-closed'); // collapse sidebar on small screens by default
+
+// ADDED (Harman): mobile sidebar overhaul.
+// setNavOpen() is the single place that opens/closes the sidebar, so every
+// trigger (menu button, outside click, navigating to a new page, resizing
+// past the mobile breakpoint) stays consistent instead of three separate
+// ad-hoc class toggles. On narrow screens it also locks background scroll
+// while the drawer is open, so it reads as an overlay rather than content
+// that just happens to sit on top of the page.
+function setNavOpen(open) {
+  document.body.classList.toggle('nav-closed', !open);
+  document.body.style.overflow = (open && innerWidth <= 760) ? 'hidden' : '';
+}
+document.getElementById('menu-btn').onclick = () => setNavOpen(document.body.classList.contains('nav-closed'));
+setNavOpen(innerWidth >= 760); // open by default on desktop, closed by default on mobile
+
+// Tap/click anywhere that isn't the sidebar or the menu button closes it —
+// works identically on desktop and mobile, no separate touch handling needed.
+document.addEventListener('click', e => {
+  if (!document.body.classList.contains('nav-closed') &&
+      !e.target.closest('#sidebar') &&
+      !e.target.closest('#menu-btn')) {
+    setNavOpen(false);
+  }
+});
+// Picking a nav link also closes the drawer, so you don't land on the new
+// page with it still covering the screen on mobile.
+addEventListener('hashchange', () => setNavOpen(false));
+// If the window is resized past the mobile breakpoint while the drawer's
+// scroll-lock is active, release it (desktop should never have a locked scroll).
+addEventListener('resize', () => { if (innerWidth > 760) document.body.style.overflow = ''; });
