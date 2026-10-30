@@ -1,3 +1,4 @@
+import { isConfigured, requestEquipment } from '../api.js';
 // NEW FILE (Harman): Inventory item detail subpage.
 // Route: #/inventory/:id (added to js/main.js's route list)
 //
@@ -122,13 +123,20 @@ function openTransferModal(item, el, activity) {
           ${sources.map(s => `<option value="${escapeHtml(s.id)}">${unitLabel(s)}: ${s.qty} available</option>`).join('')}
         </select>
       </label>
-      <label>Quantity <input name="quantity" type="number" min="1" value="1" required></label>`,
-    onSubmit(form) {
+      <label>Quantity <input name="quantity" type="number" min="1" ${isConfigured() ? 'max="1"' : ''} value="1" required></label>
+      ${isConfigured() ? '<p class="muted">One reusable asset per saved request. The destination is your signed-in account’s assigned unit.</p>' : ''}`,
+    async onSubmit(form) {
       const source = sources.find(s => String(s.id) === form.source.value);
       const quantity = Number(form.quantity.value);
       if (!source || !quantity || quantity < 1 || quantity > source.qty) {
         alert('Enter a quantity between 1 and the stock in the chosen unit.');
         return false;
+      }
+      if (isConfigured()) {
+        if (quantity !== 1) { alert('Create one saved request per reusable asset.'); return false; }
+        const id = await requestEquipment(source.id);
+        logActivity(el, activity, {summary: `Saved equipment request ${id}`, status: 'requested'});
+        return;
       }
       const record = addRequestLogEntry({
         type: 'transfer', item: item.name, itemId: item.id,

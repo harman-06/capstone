@@ -1,3 +1,5 @@
+import { isConfigured, requestEquipment, fetchTransfers, decideTransfer } from '../api.js';
+import { reloadEquipment } from '../data.js';
 // STEP 5: placeholder pages with the deep links already wired (?patient=, ?unit=, ?tab=&item=).
 import { ROLES, session, applyPermissions } from '../roles.js';
 import { getPatients, getPatient, getAppointments, getInventory, addPatientNote, addAppointment, addRequestLogEntry, getRequestLog, myUnit, canDecideTransfer, acceptTransfer, rejectTransfer, getRequestsForMe, getQcItems, qualityCheckState, recordQualityCheck, QC_WINDOW_HOURS } from '../data.js';
@@ -219,8 +221,18 @@ export function inventory(el, { query }) {
     // SPRINT 2: the entry now records which unit it is requested from
     // (sourceItemId, sourceUnit) and which unit is asking (requestingUnit),
     // so that unit's clerk can accept or reject it on the Requests page.
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const item = getInventory().find(i => i.id === button.dataset.requestItem);
+      if (isConfigured()) {
+        if (!item) return;
+        button.disabled = true;
+        try {
+          await requestEquipment(item.id);
+          location.hash = '#/requests';
+        } catch (error) { alert(error.message); }
+        finally { button.disabled = false; }
+        return;
+      }
       if (item) addRequestLogEntry({
         type: 'transfer', item: item.name, itemId: item.id,
         sourceItemId: item.id, sourceUnit: item.unit, requestingUnit: myUnit(),
@@ -238,8 +250,19 @@ export function inventory(el, { query }) {
 // SPRINT 2: added a "From unit" column and an Action column. A unit clerk
 // (or anyone allowed by canDecideTransfer in data.js) sees Accept / Reject
 // on pending transfers whose source unit is their own unit.
-export function requests(el) {
-  const log = getRequestsForMe();   // SPRINT 2: unit clerks only see their own unit's requests
+export async function requests(el) {
+  const renderedRoute = globalThis.location?.hash;
+  let log;
+  if (isConfigured()) {
+    el.innerHTML = page('Requests and approvals', '<p role="status">Loading saved equipment requests…</p>');
+    try {
+      log = (await fetchTransfers()).map(r => ({...r, createdAt: new Date(r.createdAt)}));
+      if ((!el.isConnected && el.isConnected !== undefined) || globalThis.location?.hash !== renderedRoute) return;
+    } catch (error) {
+      el.innerHTML = page('Requests and approvals', `<p role="alert">${escapeHtml(error.message)}</p><a href="#/inventory">Back to Inventory</a>`);
+      return;
+    }
+  } else log = getRequestsForMe();   // SPRINT 2: unit clerks only see their own unit's requests
   const badgeClass = s => /completed|approved/.test(s) ? 'available' : s === 'rejected' ? 'out' : 'low';
   const rows = log.map(r => `<tr>
     <td>${r.createdAt.toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td>
@@ -249,25 +272,34 @@ export function requests(el) {
     <td>${escapeHtml(r.patientName) || '—'}</td>
     <td>${escapeHtml(r.requestedBy)}</td>
     <td><span class="badge ${badgeClass(r.status)}">${escapeHtml(r.status)}</span>${r.decidedBy ? ` <span class="muted">by ${escapeHtml(r.decidedBy)}</span>` : ''}</td>
-    <td>${canDecideTransfer(r) ? `<button type="button" data-accept="${escapeHtml(r.id)}">Accept</button> <button type="button" data-reject="${escapeHtml(r.id)}">Reject</button>` : ''}</td>
+    <td>${canDecideTransfer(r) ? `<button type="button" data-accept="${escapeHtml(r.id)}">${r.persisted ? 'Approve and reserve' : 'Accept demo'}</button> <button type="button" data-reject="${escapeHtml(r.id)}">Reject</button>` : ''}</td>
   </tr>`).join('');
   el.innerHTML = page('Requests and approvals', `
+    <p class="muted">${isConfigured() ? 'Saved equipment requests. Approval reserves an asset; it does not move equipment between units. Account permissions come from the database.' : 'Demo requests reset on reload.'}</p>
     <div class="card">
       ${log.length ? `<table><thead><tr><th>When</th><th>Type</th><th>Item</th><th>From unit</th><th>Patient</th><th>Requested by</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table>`
-        : '<p class="muted">No requests yet this session. Use the Request button on an Inventory item to create one.</p>'}
+        : '<p class="muted">No equipment requests to show. Use Request on an Inventory item.</p>'}
     </div>
     <p><a href="#/inventory">← Back to Inventory</a></p>`);
 
-  el.querySelectorAll('[data-accept]').forEach(button => button.addEventListener('click', () => {
-    const result = acceptTransfer(button.dataset.accept);
-    if (!result.ok) alert(result.reason);
-    requests(el);
-  }));
-  el.querySelectorAll('[data-reject]').forEach(button => button.addEventListener('click', () => {
-    const result = rejectTransfer(button.dataset.reject);
-    if (!result.ok) alert(result.reason);
-    requests(el);
-  }));
+  async function decide(button, approve) {
+    button.disabled = true;
+    try {
+      if (isConfigured()) {
+        await decideTransfer(approve ? button.dataset.accept : button.dataset.reject, approve);
+        // The decision is already committed. A refresh failure must not suggest it was rolled back.
+        await reloadEquipment();
+      } else {
+        const result = approve ? acceptTransfer(button.dataset.accept) : rejectTransfer(button.dataset.reject);
+        if (!result.ok) alert(result.reason);
+      }
+      if (globalThis.location?.hash === renderedRoute) await requests(el);
+    } catch (error) { alert(error.message); }
+    finally { button.disabled = false; }
+  }
+  el.querySelectorAll('[data-accept]').forEach(button => button.addEventListener('click', () => decide(button, true)));
+  el.querySelectorAll('[data-reject]').forEach(button => button.addEventListener('click', () => decide(button, false)));
+  applyPermissions(el);
 }
 export const users = soon('Users');
 export const notFound = soon('Page not found');
