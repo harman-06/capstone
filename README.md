@@ -16,3 +16,10 @@ Use the "Demo role" dropdown to switch roles.
 See docs/DEPLOYMENT_RUNBOOK.md for the beginner setup guide, docs/STATUS.md for what was verified live, and docs/CHANGES.md for the corrections. Equipment reads use real Supabase Auth and protected database views. UI demo roles remain previews; patient/medicine data remains synthetic JSON. Transfer requests in the website remain placeholders; database workflows are trusted SQL-only.
 
 Run `npm install` then `npm test` for local isolated database and adapter tests. GitHub Pages serves index.html and needs no build. Never upload node_modules, .env files, secret keys, or database passwords. js/config.js contains only public browser values.
+
+## Authenticated request and supplier backend upgrade
+
+Existing projects apply `database/07_authenticated_workflows.sql` then
+`database/08_supplier_enquiries.sql` before using the new saved request actions.
+Read `docs/FARHAN_WORKFLOWS.md` for account mapping, the frontend API contract,
+checks and teammate handover. Never reset an existing project to install this upgrade.
