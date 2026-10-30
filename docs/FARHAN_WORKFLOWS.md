@@ -1,5 +1,7 @@
 # Farhan's hospital and supplier database integration
 
+Read [PROJECT_GUIDE.md](PROJECT_GUIDE.md) for the beginner explanation, before/after comparison, blockers, ordered ownership handover, troubleshooting and proposed improvements beyond this contract.
+
 ## What this contribution implements
 
 Sprint 2: hospital equipment requests and approve/reject decisions now have actor-bound database entry points. The existing request screens call these functions when Supabase is configured. Requests are loaded again from the database when the Requests page opens. Approving reserves one asset; it does not claim that an asset has already moved to another unit.

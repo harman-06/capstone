@@ -1,7 +1,14 @@
 # Nexora Health Lean v3 deployment
 
-## Status
-The complete corrected package is prepared for harman-06/capstone. The original public frontend uses JSON, UI demo roles, and placeholder request buttons. This integration adds real Supabase sign-in and live read-only equipment inventory. Transfer workflows run through trusted SQL, not browser RPC. Medicine, patient, appointment and notification displays remain synthetic JSON.
+## Current status and installation choice
+
+The workflow branch adds authenticated request/decision RPCs and a supplier enquiry backend to the existing equipment integration. Migrations 07 and 08 are already applied to the hosted Nexora Health project. The frontend changes remain in [draft PR #4](https://github.com/harman-06/capstone/pull/4). Read [STATUS.md](STATUS.md) for dated evidence and [PROJECT_GUIDE.md](PROJECT_GUIDE.md) for the ordered release steps.
+
+For the existing hosted project, do not create a replacement project or rerun the original schema. Verify the installed migration versions, review the demo account roles/memberships, run read-only health checks, then perform real-account browser acceptance. Only merge and verify Pages after the release criteria pass. No current user roles should be inferred from the demo role picker.
+
+The initial-installation instructions below apply only to a new empty project. After files 00–05, run `07_authenticated_workflows.sql` then `08_supplier_enquiries.sql` to reproduce the current backend. `06_provision_member.example.sql` is an example for reviewed provisioning, not a mandatory blind execution step. Run `09_workflow_health.sql` after upgrading. Never rerun `04_rls.sql` after 07/08 without reviewing its original function-grant reset.
+
+Medicine, patient, appointment and notification examples remain synthetic. Supplier UI, account provisioning and refresh are separate remaining integration work.
 
 ## Create a project only if needed
 1. Sign in at https://supabase.com/dashboard.
@@ -26,7 +33,7 @@ For a new empty project only:
 ## Frontend staff account (different from your Supabase dashboard account)
 1. Open Authentication > Users. Create a dedicated test account using an email/password you control. Enter the password privately in the dashboard. This is a credential creation step for the user to perform.
 2. Copy the Auth user UUID; it is an identifier, not a password.
-3. In SQL Editor create a public.users membership row using this template. Replace the UUID and email. No role assignment is needed for read-only equipment access.
+3. In SQL Editor create a public.users membership row using this template. Replace the UUID and email. No role assignment is needed for the original read-only equipment access. Requesting or deciding transfers requires additional reviewed roles and a home department; follow `FARHAN_WORKFLOWS.md`. This simple membership template alone is insufficient for workflow access.
 
 ```sql
 INSERT INTO public.users(auth_subject,email,display_name)
@@ -49,10 +56,10 @@ Do not link your account to Nadia/Eli/Sam: those are synthetic workflow actors. 
 Run npm install then npm test. PGlite is isolated local PostgreSQL, with a simulated auth.uid() and built-in roles. Tests cover SQL execution, seed repeatability, workflow/stock invariants, browser privileges and token headers. These do not replace live Supabase Data API/browser tests. No patient or medicine writes are implemented.
 
 ## Scope and remaining work
-- Browser transfer Request buttons and Requests page remain placeholders. Transfer functions are deliberately not exposed to the browser; future authenticated RPC must bind actors to auth.uid(), not accept arbitrary user IDs.
+- On the workflow branch, equipment Request and approve/reject actions call actor-bound RPCs. Legacy trusted transfer functions remain inaccessible directly. Dispatch/receipt browser actions and the supplier screens remain future integration work.
 - Trusted database-owner SQL can bypass RLS and modify domain state. Never distribute database-owner credentials.
 - Policies currently accept any one matching active role policy; multiple rows are alternatives, not multi-approver requirements.
 - Hospital-scoped roles apply to child departments. Location scopes must be explicit; NULL/global scopes are not supported.
-- No realtime subscription; refresh is manual. Patient/medicine JSON remains public synthetic demo content.
+- No realtime subscription or polling is implemented by the backend contribution. Equipment refresh is manual, and Requests reloads on page open. Patient/medicine JSON remains public synthetic demo content.
 
 Existing project URL: https://olbvwbytgfnxizxzssok.supabase.co
