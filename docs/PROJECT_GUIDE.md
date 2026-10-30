@@ -1,5 +1,7 @@
 # Nexora Health — contribution, readiness and practical next steps
 
+> Allocation upgrade: [Equipment allocation MVP](ALLOCATION.md) supersedes the earlier direct-request/approve browser flow on this branch. Requests now enter an independently reviewed queue; source reserve configuration and Allocate next create the reserved transfer. See that guide for the exact priority/fairness policy, API contract, migration and verification limits.
+
 Updated: 30 October 2026. Audience: teammates, presenters and developers.
 
 This guide describes the implementation on `farhan/persisted-workflows`, proposed in [PR #4](https://github.com/harman-06/capstone/pull/4). Database migrations 07 and 08 are applied to the existing Nexora Health project. The frontend changes are awaiting release. Proposed additions below are designs, not completed features. This is a capstone prototype using synthetic data, not a certified clinical or procurement system.

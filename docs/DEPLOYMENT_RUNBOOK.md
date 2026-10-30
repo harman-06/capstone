@@ -1,5 +1,7 @@
 # Nexora Health Lean v3 deployment
 
+> Allocation upgrade: [Equipment allocation MVP](ALLOCATION.md) supersedes the earlier direct-request/approve browser flow on this branch. Requests now enter an independently reviewed queue; source reserve configuration and Allocate next create the reserved transfer. See that guide for the exact priority/fairness policy, API contract, migration and verification limits.
+
 ## Current status and installation choice
 
 The workflow branch adds authenticated request/decision RPCs and a supplier enquiry backend to the existing equipment integration. Migrations 07 and 08 are already applied to the hosted Nexora Health project. The frontend changes remain in [draft PR #4](https://github.com/harman-06/capstone/pull/4). Read [STATUS.md](STATUS.md) for dated evidence and [PROJECT_GUIDE.md](PROJECT_GUIDE.md) for the ordered release steps.

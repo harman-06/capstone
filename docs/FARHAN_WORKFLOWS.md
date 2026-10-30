@@ -1,5 +1,7 @@
 # Farhan's hospital and supplier database integration
 
+> Allocation upgrade: [Equipment allocation MVP](ALLOCATION.md) supersedes the earlier direct-request/approve browser flow on this branch. Requests now enter an independently reviewed queue; source reserve configuration and Allocate next create the reserved transfer. See that guide for the exact priority/fairness policy, API contract, migration and verification limits.
+
 Read [PROJECT_GUIDE.md](PROJECT_GUIDE.md) for the beginner explanation, before/after comparison, blockers, ordered ownership handover, troubleshooting and proposed improvements beyond this contract.
 
 ## What this contribution implements

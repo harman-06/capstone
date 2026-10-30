@@ -1,5 +1,7 @@
 # Deployment status — 30 October 2026
 
+> Allocation upgrade: [Equipment allocation MVP](ALLOCATION.md) supersedes the earlier direct-request/approve browser flow on this branch. Requests now enter an independently reviewed queue; source reserve configuration and Allocate next create the reserved transfer. See that guide for the exact priority/fairness policy, API contract, migration and verification limits.
+
 This dated snapshot supersedes the older status below for the workflow upgrade. Source: branch `farhan/persisted-workflows`, [draft PR #4](https://github.com/harman-06/capstone/pull/4). See [PROJECT_GUIDE.md](PROJECT_GUIDE.md) for what/why/how explanations and the next-step acceptance sequence.
 
 | Area | Verified result | Remaining work |
