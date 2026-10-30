@@ -49,7 +49,7 @@ function renderOtherUnits(item) {
 
 // Other units that can actually supply the item (stock above 0, not 'out').
 const getUnitOptions = item =>
-  getInventory().filter(i => i.name === item.name && i.id !== item.id && i.qty > 0 && i.status !== 'out');
+  getInventory().filter(i => i.name === item.name && i.id !== item.id && (isConfigured() || (i.qty > 0 && i.status !== 'out')));
 
 // ----------------------------------------------------------------------------
 
@@ -124,18 +124,18 @@ function openTransferModal(item, el, activity) {
         </select>
       </label>
       <label>Quantity <input name="quantity" type="number" min="1" ${isConfigured() ? 'max="1"' : ''} value="1" required></label>
-      ${isConfigured() ? '<p class="muted">One reusable asset per saved request. The destination is your signed-in account’s assigned unit.</p>' : ''}`,
+      ${isConfigured() ? '<p class="muted">One reusable asset per queued request; zero stock can wait for availability. The destination is your signed-in account’s assigned unit.</p>' : ''}`,
     async onSubmit(form) {
       const source = sources.find(s => String(s.id) === form.source.value);
       const quantity = Number(form.quantity.value);
-      if (!source || !quantity || quantity < 1 || quantity > source.qty) {
+      if (!source || !quantity || quantity < 1 || (!isConfigured() && quantity > source.qty)) {
         alert('Enter a quantity between 1 and the stock in the chosen unit.');
         return false;
       }
       if (isConfigured()) {
         if (quantity !== 1) { alert('Create one saved request per reusable asset.'); return false; }
         const id = await requestEquipment(source.id);
-        logActivity(el, activity, {summary: `Saved equipment request ${id}`, status: 'requested'});
+        logActivity(el, activity, {summary: `Queued equipment request ${id}. Open Requests for review and allocation.`, status: 'queued'});
         return;
       }
       const record = addRequestLogEntry({

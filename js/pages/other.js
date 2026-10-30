@@ -1,3 +1,4 @@
+import { renderAllocationQueue } from './allocation.js';
 import { isConfigured, requestEquipment, fetchTransfers, decideTransfer } from '../api.js';
 import { reloadEquipment } from '../data.js';
 // STEP 5: placeholder pages with the deep links already wired (?patient=, ?unit=, ?tab=&item=).
@@ -272,15 +273,18 @@ export async function requests(el) {
     <td>${escapeHtml(r.patientName) || '—'}</td>
     <td>${escapeHtml(r.requestedBy)}</td>
     <td><span class="badge ${badgeClass(r.status)}">${escapeHtml(r.status)}</span>${r.decidedBy ? ` <span class="muted">by ${escapeHtml(r.decidedBy)}</span>` : ''}</td>
-    <td>${canDecideTransfer(r) ? `<button type="button" data-accept="${escapeHtml(r.id)}">${r.persisted ? 'Approve and reserve' : 'Accept demo'}</button> <button type="button" data-reject="${escapeHtml(r.id)}">Reject</button>` : ''}</td>
+    <td>${canDecideTransfer(r) ? `<button type="button" data-accept="${escapeHtml(r.id)}" ${r.persisted ? 'disabled title="Use the allocation queue for new requests"' : ''}>${r.persisted ? 'Approve through queue' : 'Accept demo'}</button> <button type="button" data-reject="${escapeHtml(r.id)}">Reject</button>` : ''}</td>
   </tr>`).join('');
   el.innerHTML = page('Requests and approvals', `
+    ${isConfigured() ? '<section class="card" id="allocation-queue"></section><h2>Transfer history</h2>' : ''}
     <p class="muted">${isConfigured() ? 'Saved equipment requests. Approval reserves an asset; it does not move equipment between units. Account permissions come from the database.' : 'Demo requests reset on reload.'}</p>
     <div class="card">
       ${log.length ? `<table><thead><tr><th>When</th><th>Type</th><th>Item</th><th>From unit</th><th>Patient</th><th>Requested by</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table>`
         : '<p class="muted">No equipment requests to show. Use Request on an Inventory item.</p>'}
     </div>
     <p><a href="#/inventory">← Back to Inventory</a></p>`);
+
+  if (isConfigured()) await renderAllocationQueue(el.querySelector('#allocation-queue'));
 
   async function decide(button, approve) {
     button.disabled = true;
@@ -306,5 +310,5 @@ export const notFound = soon('Page not found');
 export const help = el => { el.innerHTML = page('Help', `<div class="card"><ol>
   <li>Use the sidebar to move between sections. You only see what your role can use.</li>
   <li>The dashboard is your home page. Select any card to open the full page.</li>
-  <li>Search Inventory for equipment or medicine. Select Request to view the item's stock details. Online requests are not available yet.</li>
+  <li>Search Inventory for equipment or medicine. Select Request to view the item's stock details. Live equipment requests enter the allocation queue for coordinator review.</li>
   <li>A lock icon means the action needs approval from a doctor.</li></ol></div>`); };
