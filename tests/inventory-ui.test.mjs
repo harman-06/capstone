@@ -10,7 +10,7 @@ globalThis.fetch = async url => ({ok:true,json:async()=>url.includes('inventory.
 const data = await import('../js/data.js');
 await data.loadData();
 const {inventory} = await import('../js/pages/other.js');
-test('inventory combines name and unit filters, reports empty results and keeps request handlers',()=>{
+test('inventory combines name and unit filters, reports empty results and keeps request handlers',async()=>{
   const control = () => ({value:'',handlers:{},addEventListener(event, fn){this.handlers[event]=fn;}});
   const search=control(),unit=control(),count={},empty={};
   const rows=items.map(i=>({dataset:{name:i.name.toLowerCase(),unit:i.unit},hidden:false}));
@@ -27,6 +27,6 @@ test('inventory combines name and unit filters, reports empty results and keeps 
   assert.equal(empty.hidden,false);assert.equal(count.textContent,'0 items');
   search.value='';unit.value='';unit.handlers.change();
   assert.equal(empty.hidden,true);assert.equal(count.textContent,'3 items');
-  globalThis.location={hash:''}; request.handlers.click();
+  globalThis.location={hash:''}; await request.handlers.click();
   assert.equal(location.hash,'#/requests?item=a');
 });
