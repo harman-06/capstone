@@ -6,7 +6,7 @@
 // They only call the getters below.
 // So the data source can easily change without touching any page.
 import { ROLES, session, can } from './roles.js';
-import { isConfigured, fetchInventory, fetchUnits } from './api.js';
+import { isConfigured, fetchInventory, fetchUnits, onAuthChange } from './api.js';
 const db = {};
 let source = 'Loading'; // human-readable string shown in the sign-in status area
 export const getDataSource = () => source;
@@ -26,7 +26,7 @@ export async function loadData() {
   await reloadEquipment();
 }
 // Loads equipment inventory + units. Falls back to demo JSON if Supabase
-// isn't configured (config.js empty) or the live fetch fails; otherwise
+// isn't configured (config.js empty). Live errors fail closed; otherwise
 // merges live equipment rows with the still-synthetic medicine rows.
 export async function reloadEquipment() {
   const demoInventory = await json('inventory');
@@ -45,7 +45,6 @@ export async function reloadEquipment() {
     if (!units.length) throw new Error('No units returned. Your account may not be provisioned, or demo data is missing.');
     db.inventory = [...inventory, ...db.inventory];
     db.units = units;
-    addSprint2Equipment();
     source = 'Live Supabase equipment · medicine/patients remain demo data';
   } catch (error) {
     source = `Database equipment unavailable: ${error.message}`;
@@ -70,11 +69,9 @@ export const getUnits = () => db.units;
 // Supports: the Inventory item detail page, the patient profile expansion,
 // appointment booking, and the Requests page.
 //
-// Everything here is IN-MEMORY ONLY for this demo (no Supabase write path
-// exists yet for stock deduction, patient notes, appointments, or requests —
-// that's the authorization/database teammate's next piece). State resets on
-// reload. Once a real write workflow exists, these are the functions to
-// point at it instead of mutating `db` directly.
+// Patient, medicine, appointment and QC helpers remain synthetic/in-memory.
+// Configured equipment requests and decisions use js/api.js instead.
+// Demo role selection never supplies the actor for a database action.
 // ============================================================================
 
 // NOTE: getInventory() itself is intentionally left exactly as it was
@@ -146,6 +143,7 @@ export function addAppointment(entry) {
 // of being a placeholder.
 const requestLog = [];
 export function addRequestLogEntry(entry) {
+  if (isConfigured() && entry.type === 'transfer') throw new Error('Live equipment requests must be saved through the authenticated workflow.');
   const record = {
     id: `REQ-${String(requestLog.length + 1).padStart(3, '0')}`,
     createdAt: new Date(),
@@ -178,6 +176,7 @@ export const myUnit = () => ROLES[session.role].unit ?? session.unit;
 // names the user's own unit as the source, and the user did not raise it.
 // (To let doctors accept for any unit, add: || ROLES[session.role].scope === 'all')
 export function canDecideTransfer(request) {
+  if (request?.persisted) return Boolean(request.canDecide);
   if (!request || request.type !== 'transfer' || request.status !== 'pending') return false;
   if (can('transfers.approve') !== 'allow') return false;
   if (request.sourceUnit !== myUnit()) return false;
@@ -190,6 +189,7 @@ export function canDecideTransfer(request) {
 export function acceptTransfer(id) {
   const r = requestLog.find(x => x.id === id);
   if (!r) return { ok: false, reason: 'Request not found.' };
+  if (isConfigured()) return { ok: false, reason: 'Use the authenticated database decision action.' };
   if (!canDecideTransfer(r)) return { ok: false, reason: 'You cannot accept this request.' };
   const from = db.inventory.find(i => i.id === r.sourceItemId);
   // Item-page requests: itemId is the row that receives the stock.
@@ -212,6 +212,7 @@ export function acceptTransfer(id) {
 export function rejectTransfer(id) {
   const r = requestLog.find(x => x.id === id);
   if (!r) return { ok: false, reason: 'Request not found.' };
+  if (isConfigured()) return { ok: false, reason: 'Use the authenticated database decision action.' };
   if (!canDecideTransfer(r)) return { ok: false, reason: 'You cannot reject this request.' };
   r.decidedBy = ROLES[session.role].user;
   r.decidedAt = new Date();
@@ -300,3 +301,11 @@ export function getRequestsForMe() {
     ))
   );
 }
+
+// Protected browser state must not survive sign-out, expiry or account changes.
+onAuthChange(() => {
+  db.inventory = (db.inventory ?? []).filter(i => i.type !== 'equipment');
+  db.units = [];
+  requestLog.length = 0;
+  source = 'Equipment reload required for the current session';
+});

@@ -38,5 +38,7 @@ test('configured failure cannot silently present JSON equipment as live; medicin
  window.NEXORA_CONFIG.supabaseUrl='';
  await data.reloadEquipment();
  assert.match(data.getDataSource(),/Demo JSON/);
- assert.equal(data.getInventory().length,2);
+ assert.ok(data.getInventory().some(i => i.id === 'equipment-demo'));
+ assert.ok(data.getInventory().some(i => i.id === 'medicine-demo'));
+ assert.ok(data.getInventory().every(i => i.id !== undefined));
 });

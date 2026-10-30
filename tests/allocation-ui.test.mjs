@@ -1,0 +1,23 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+globalThis.window={NEXORA_CONFIG:{supabaseUrl:'https://demo.supabase.co',supabasePublishableKey:'sb_publishable_test'}};
+globalThis.location={hash:'#/requests'};
+const api=await import('../js/api.js');
+const {renderAllocationQueue}=await import('../js/pages/allocation.js');
+test('queue shows server-permitted controls, disabled unconfigured pools and escaped item names',async()=>{
+ const rows=[{id:'r1',source_id:'s',category_id:'c',source_unit:'Source',destination_unit:'Destination',item:'<script>bad</script>',status:'queued',priority:1,created_at:'2026-10-30T10:00:00Z',can_coordinate:true,can_review:true,can_cancel:false,pool_enabled:false,minimum_retained:1}];
+ globalThis.fetch=async url=>({ok:true,status:200,json:async()=>url.includes('/auth/')?{access_token:'test',refresh_token:'test',expires_in:3600}:rows});
+ await api.signIn('staff@example.test','test-only');
+ const controls={};const host={innerHTML:'',isConnected:true,querySelector:sel=>controls[sel]??={},querySelectorAll:()=>[]};
+ await renderAllocationQueue(host);
+ assert.ok(host.innerHTML.includes('&lt;script&gt;bad&lt;/script&gt;'));
+ assert.ok(!host.innerHTML.includes('<script>bad</script>'));
+ assert.match(host.innerHTML,/data-allocate="0" disabled/);
+ assert.match(host.innerHTML,/awaiting review/);
+ assert.match(host.innerHTML,/data-review="0"/);
+ rows[0]={...rows[0],can_coordinate:false,can_review:false,can_cancel:true};
+ await renderAllocationQueue(host);
+ assert.ok(!host.innerHTML.includes('data-allocate='));
+ assert.ok(!host.innerHTML.includes('data-review='));
+ assert.ok(host.innerHTML.includes('data-cancel="0"'));
+});
