@@ -35,19 +35,20 @@ BEGIN
  EXECUTE 'SET LOCAL ROLE authenticated';
  PERFORM set_config('request.jwt.claim.sub',nurse_auth::text,true);
  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',nurse_auth,'role','authenticated')::text,true);
- request:=public.nh_api_request_equipment('EQ-'||src::text||'-'||category::text,'Synthetic rollback request');
- ASSERT (SELECT count(*) FROM public.nh_api_list_transfers())=1,'Requester cannot retrieve saved request';
+ request:=public.nh_api_enqueue_equipment('EQ-'||src::text||'-'||category::text,gen_random_uuid(),'Synthetic rollback request');
+ ASSERT (SELECT count(*) FROM public.nh_api_list_allocation_queue())=1,'Requester cannot retrieve queued request';
  denied:=false;
- BEGIN PERFORM public.nh_api_decide_transfer(request,true); EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
- ASSERT denied,'Self-approval was allowed';
+ BEGIN PERFORM public.nh_api_review_allocation(request,3,NULL,'Self review attempt denied'); EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ ASSERT denied,'Self-review was allowed';
  PERFORM set_config('request.jwt.claim.sub',reviewer_auth::text,true);
  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',reviewer_auth,'role','authenticated')::text,true);
- PERFORM public.nh_api_decide_transfer(request,true);
+ PERFORM public.nh_api_configure_allocation(src,category,0);
+ PERFORM public.nh_api_review_allocation(request,1,NULL,'Synthetic routine request verified');
+ payload:=public.nh_api_allocate_next(src,category,gen_random_uuid());
+ ASSERT payload->>'outcome'='allocated','Queue did not allocate equipment';
  SELECT v INTO payload FROM public.nh_api_list_transfers() v;
- ASSERT payload->>'status'='reserved','Approval did not reserve equipment';
- denied:=false;
- BEGIN PERFORM public.nh_api_decide_transfer(request,true); EXCEPTION WHEN raise_exception THEN denied:=true; END;
- ASSERT denied,'Repeated approval was allowed';
+ ASSERT payload->>'status'='reserved','Allocation did not reserve equipment';
+ ASSERT (public.nh_api_allocate_next(src,category,gen_random_uuid())->>'outcome')='no_eligible_requests','Queue allocated the same request twice';
  PERFORM set_config('request.jwt.claim.sub',nurse_auth::text,true);
  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',nurse_auth,'role','authenticated')::text,true);
  enquiry:=public.nh_api_create_supply_enquiry(category,2,'Hospital-only synthetic note');
@@ -91,4 +92,5 @@ ROLLBACK;
 SELECT jsonb_build_object('result','Hosted workflow assertions passed; synthetic records rolled back',
  'existing_assets',(SELECT count(*) FROM public.equipment_assets),
  'existing_transfers',(SELECT count(*) FROM public.transfer_requests),
+ 'allocation_requests',(SELECT count(*) FROM public.nh_allocation_requests),
  'enquiries',(SELECT count(*) FROM public.nh_supply_enquiries)) AS verification;

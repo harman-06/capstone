@@ -17,7 +17,7 @@ test('workflow calls are authenticated POSTs with no caller-supplied actor',asyn
   assert.ok(url.includes('/rest/v1/rpc/nh_api_'));
   assert.ok(!Object.keys(JSON.parse(options.body)).some(k=>/actor|requester|approver|user_id/.test(k)));
  }
- assert.deepEqual(JSON.parse(calls[1].options.body),{p_source_inventory_id:'EQ-source-category',p_reason:'Needed'});
+ const queuedBody=JSON.parse(calls[1].options.body); assert.equal(queuedBody.p_source_inventory_id,'EQ-source-category'); assert.equal(queuedBody.p_reason,'Needed'); assert.match(queuedBody.p_operation_id,/^[0-9a-f-]{36}$/); assert.ok(calls[1].url.endsWith('/nh_api_enqueue_equipment'));
  assert.deepEqual(JSON.parse(calls[5].options.body),{p_enquiry_id:'enquiry-id',p_availability:'available',p_available_quantity:2,p_estimated_delivery_date:'2030-01-02'});
  await api.signOut();
 });
@@ -49,4 +49,20 @@ test('missing migrations fail explicitly; expired sessions are cleared',async()=
  await assert.rejects(api.fetchTransfers(),/not enabled yet/);
  globalThis.fetch=async()=>({ok:false,status:401});
  await assert.rejects(api.fetchTransfers(),/Session expired/);assert.equal(api.isSignedIn(),false);
+});
+
+test('allocation retries reuse an operation ID after an uncertain save',async()=>{
+ const operations=[]; let failed=true;
+ globalThis.fetch=async(url,options)=>{
+  if(url.includes('/auth/v1/token'))return loginResponse();
+  operations.push(JSON.parse(options.body).p_operation_id);
+  if(failed){failed=false;throw Error('Connection lost after possible commit');}
+  return {ok:true,status:200,json:async()=>({outcome:'allocated'})};
+ };
+ await api.signIn('staff@example.test','test-only');
+ await assert.rejects(api.allocateNext('source','category'),/Connection lost/);
+ await api.allocateNext('source','category');
+ assert.equal(operations[0],operations[1]);
+ await api.allocateNext('source','category');
+ assert.notEqual(operations[1],operations[2]);
 });
