@@ -4,10 +4,11 @@ let auth = null;
 let sessionVersion = 0;
 let refreshPromise;
 const authListeners = new Set();
+const pendingOperations = new Map();
 export const isSignedIn = () => Boolean(auth);
 export const isConfigured = () => Boolean(cfg.supabaseUrl && cfg.supabasePublishableKey);
 export const onAuthChange = callback => { authListeners.add(callback); return () => authListeners.delete(callback); };
-function notifyAuth() { for (const callback of authListeners) callback(); }
+function notifyAuth() { pendingOperations.clear(); for (const callback of authListeners) callback(); }
 function config() {
   if (!isConfigured()) throw new Error('Database is not configured');
   if (!/^sb_publishable_/.test(cfg.supabasePublishableKey)) throw new Error('Use a Supabase publishable key only');
@@ -96,9 +97,27 @@ export const fetchInventory = () => rest('frontend_equipment_inventory_v?select=
 export const fetchUnits = () => rest('frontend_units_v?select=id,number,name,floor&order=floor.asc,name.asc');
 export const fetchHospitalContext = () => rpc('nh_api_hospital_context');
 export const fetchTransfers = () => rpc('nh_api_list_transfers');
-export const requestEquipment = (sourceInventoryId, reason = null) => rpc('nh_api_request_equipment', {
+// Retain the operation key after an uncertain response; clear it only after confirmed success.
+async function idempotentRpc(name, key, body) {
+  const version = sessionVersion;
+  const operationId = pendingOperations.get(key) || crypto.randomUUID();
+  pendingOperations.set(key, operationId);
+  const result = await rpc(name, {...body, p_operation_id: operationId});
+  if (version === sessionVersion && pendingOperations.get(key) === operationId) pendingOperations.delete(key);
+  return result;
+}
+export const requestEquipment = (sourceInventoryId, reason = null) => idempotentRpc('nh_api_enqueue_equipment', JSON.stringify(['request',sourceInventoryId,reason]), {
   p_source_inventory_id: sourceInventoryId, p_reason: reason
 });
+export const fetchAllocationQueue = () => rpc('nh_api_list_allocation_queue');
+export const reviewAllocation = (requestId, priority, neededBy, note) => rpc('nh_api_review_allocation', {
+  p_request_id: requestId, p_priority: priority, p_needed_by: neededBy, p_note: note
+});
+export const configureAllocationPool = (source, category, minimumRetained) => rpc('nh_api_configure_allocation', {
+  p_source: source, p_category: category, p_minimum_retained: minimumRetained
+});
+export const allocateNext = (source, category) => idempotentRpc('nh_api_allocate_next', JSON.stringify(['allocate',source,category]), {p_source: source, p_category: category});
+export const cancelAllocation = requestId => rpc('nh_api_cancel_allocation', {p_request_id: requestId});
 export const decideTransfer = (transferId, approve, note = null) => rpc('nh_api_decide_transfer', {
   p_transfer_id: transferId, p_approve: approve, p_note: note
 });
