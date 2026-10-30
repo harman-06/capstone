@@ -28,12 +28,52 @@ const icons = [
   'M12 22a10 10 0 1 0 0-20a10 10 0 0 0 0 20 M9 8a3 3 0 0 1 6 0c0 2-3 2-3 5 M12 17h.01'
 ];
 NAV.forEach((item,i) => item.icon = icons[i]);
+
+// Shared SVG wrapper so the sidebar and the tab bar draw icons identically.
+const svg = path => `<svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg>`;
+
+// ADDED (Harman): mobile bottom tab bar.
+// TAB_PRIORITY is the order we prefer for the quick-access tabs. The bar takes
+// the first 4 entries the current role is actually allowed to see, so a nurse
+// gets Dashboard / Patients / Appointments / Inventory, while a patient gets
+// Dashboard / My Health / Appointments. Everything else stays in the drawer,
+// reachable through the "More" tab. CSS only shows the bar on narrow screens.
+const TAB_PRIORITY = ['/dashboard', '/patients', '/my-health', '/appointments', '/inventory', '/requests', '/users'];
+const MORE_ICON = 'M4 6h16 M4 12h16 M4 18h16';
+let tabbar;   // created once on first render, then reused
+
+function renderTabBar(current, allowed) {
+  if (!tabbar) {
+    tabbar = document.createElement('nav');
+    tabbar.id = 'tabbar';
+    tabbar.className = 'tabbar';
+    tabbar.setAttribute('aria-label', 'Quick navigation');
+    document.body.appendChild(tabbar);
+    // "More" opens the same drawer as the hamburger button by clicking it.
+    // stopPropagation keeps main.js's "click outside closes the sidebar"
+    // listener from seeing this click and closing the drawer it just opened.
+    tabbar.addEventListener('click', e => {
+      if (!e.target.closest('[data-tab-more]')) return;
+      e.stopPropagation();
+      document.getElementById('menu-btn').click();
+    });
+  }
+  const tabs = TAB_PRIORITY
+    .map(route => allowed.find(n => n.route === route))
+    .filter(Boolean)
+    .slice(0, 4);
+  tabbar.innerHTML = tabs.map(n => {
+    const active = current.startsWith(n.route);
+    return `<a href="#${n.route}" class="${active ? 'active' : ''}" ${active ? 'aria-current="page"' : ''}>${svg(n.icon)}<span>${n.label}</span></a>`;
+  }).join('') + `<button type="button" data-tab-more aria-label="More navigation">${svg(MORE_ICON)}<span>More</span></button>`;
+}
+
 // Rebuilds #sidebar for the current route and role. Called from main.js after every navigation. 
 // `current` is the active path, used to mark the matching link as .active / aria-current.
 export function renderNav(current) {
-  document.getElementById('sidebar').innerHTML = '<span class="nav-caption">WORKSPACE</span>' + NAV
-    .filter(n => !n.cap || can(n.cap) !== 'deny')
-    .map(n => `<a href="#${n.route}" class="${current.startsWith(n.route) ? 'active' : ''}" ${current.startsWith(n.route) ? 'aria-current="page"' : ''}><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="${n.icon}"/></svg>${n.label}</a>`)
+  const allowed = NAV.filter(n => !n.cap || can(n.cap) !== 'deny');
+  document.getElementById('sidebar').innerHTML = '<span class="nav-caption">WORKSPACE</span>' + allowed
+    .map(n => `<a href="#${n.route}" class="${current.startsWith(n.route) ? 'active' : ''}" ${current.startsWith(n.route) ? 'aria-current="page"' : ''}>${svg(n.icon)}${n.label}</a>`)
     .join('') + '<span class="nav-footer">Nexora Health<br>Capstone demonstration</span>';
+  renderTabBar(current, allowed);   // ADDED (Harman): keep the mobile tab bar in sync with the sidebar
 }
-
