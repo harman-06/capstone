@@ -3,10 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/database.mjs && node tests/workflow-database.mjs && node --test tests/*.test.mjs",
-    "test:workflows": "node tests/workflow-database.mjs"
+    "test": "node tests/database.mjs && node tests/workflow-database.mjs && node tests/allocation-database.mjs && node --test tests/*.test.mjs",
+    "test:workflows": "node tests/workflow-database.mjs",
+    "test:allocation": "node tests/allocation-database.mjs",
+    "test:concurrency": "node tests/allocation-concurrency.mjs"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "0.5.8"
+    "@electric-sql/pglite": "0.5.8",
+    "pg": "8.23.1"
   }
 }
