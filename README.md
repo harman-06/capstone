@@ -1,5 +1,7 @@
 # Nexora Health
 
+> Allocation upgrade: [Equipment allocation MVP](docs/ALLOCATION.md) supersedes the earlier direct-request/approve browser flow on this branch. Requests now enter an independently reviewed queue; source reserve configuration and Allocate next create the reserved transfer. See that guide for the exact priority/fairness policy, API contract, migration and verification limits.
+
 Nexora Health is a capstone web prototype for hospital equipment visibility, controlled requests and supplier availability coordination. GitHub Pages hosts the interface; Supabase provides Auth and PostgreSQL for the connected equipment workflows. Patient, medicine and appointment examples remain synthetic.
 
 ## Start here
