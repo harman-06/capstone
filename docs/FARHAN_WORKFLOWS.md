@@ -6,7 +6,7 @@ Read [PROJECT_GUIDE.md](PROJECT_GUIDE.md) for the beginner explanation, before/a
 
 ## What this contribution implements
 
-Sprint 2: hospital equipment requests and approve/reject decisions now have actor-bound database entry points. The existing request screens call these functions when Supabase is configured. Requests are loaded again from the database when the Requests page opens. Approving reserves one asset; it does not claim that an asset has already moved to another unit.
+Sprint 2 and allocation extension: hospital equipment demand enters an actor-bound queue. The existing request screens enqueue when Supabase is configured. A different source-policy approver verifies priority; the coordinator configures a retained-stock floor and uses Allocate next. The database ranks eligible requests and atomically creates/reserves a transfer. Requests and transfers reload from the database. Approval does not claim physical movement.
 
 Sprint 3: supplier organisations, memberships, enquiries and responses have a separate database contract and JavaScript adapter. A nurse can create a hospital-only enquiry. A different authorized charge nurse or operations user sends it to an active supplier assigned to that hospital. Only that supplier's active members can respond. The hospital retrieves the saved response through the same API. Supplier screens and automatic-refresh UI remain the assigned frontend work; this contribution does not mark them complete.
 
@@ -16,7 +16,7 @@ Patient, appointment, medicine and quality-check helpers remain synthetic. Demo 
 
 1. Confirm the selected Supabase project and take the normal project backup/checkpoint. Do not reset the project or rerun `00_schema.sql`.
 2. Inspect the existing `locations`, `users`, `user_role_assignments`, `equipment_assets`, `approval_policies` and workflow functions. Resolve unexpected schema differences before proceeding.
-3. Run `database/07_authenticated_workflows.sql`, followed by `database/08_supplier_enquiries.sql` in the trusted SQL editor. Both are transactional and additive; neither deletes existing requests or seeds new login accounts. Reapplying them preserves data.
+3. Run `database/07_authenticated_workflows.sql`, followed by `database/08_supplier_enquiries.sql` in the trusted SQL editor. Then apply the two allocation migrations under `supabase/migrations/` in timestamp order. All are transactional and preserve existing records; no new login accounts are seeded. Do not reapply an older migration after a later one: newer files deliberately replace the earlier browser workflow contract.
 4. Run the read-only checks in `database/09_workflow_health.sql` and review Supabase's database security advisors. The public API functions should be SECURITY INVOKER. Privileged implementations live in `nexora_private`, with explicit execution grants and actor/organisation checks. Keep that schema out of Data API exposed schemas.
 5. Do not rerun `04_rls.sql` after these scripts without reviewing its function-grant reset: it was written for the original read-only frontend.
 6. Provision distinct authenticated identities as described below, then run the manual acceptance checks. Local PostgreSQL-compatible tests are not proof that the hosted project is updated.
@@ -42,14 +42,16 @@ Import these named exports from `js/api.js`. All calls use the current bearer to
 | Export | Input | Result |
 | --- | --- | --- |
 | `fetchHospitalContext()` | None | Actual user display name and assigned department/unit code |
-| `requestEquipment(sourceInventoryId, reason)` | Live `EQ-<department UUID>-<category UUID>` summary ID | Saved transfer UUID; one reusable asset per request |
+| `requestEquipment(sourceInventoryId, reason)` | Live `EQ-<department UUID>-<category UUID>` summary ID | Saved queue request UUID; one reusable asset demand, reviewed before allocation |
 | `fetchTransfers()` | None | Saved requests visible to requester or applicable approver; includes server-calculated `canDecide` |
-| `decideTransfer(transferId, approve, note)` | Saved request ID and boolean | Approve/reserve or reject; self-approval and repeat decisions fail |
+| `decideTransfer(transferId, false, note)` | Existing transfer UUID, false | Reject a legacy pending transfer; direct browser approval is retired to prevent queue bypass |
 | `fetchSuppliers()` | None | Active suppliers assigned to the caller's hospital |
 | `createSupplyEnquiry(categoryId, quantity, reason)` | Existing category UUID, whole quantity 1–1000 | Hospital-only enquiry UUID |
 | `sendSupplyEnquiry(enquiryId, supplierId)` | Enquiry and supplier UUIDs | Authorized external handoff; cannot send one's own enquiry |
 | `fetchSupplyEnquiries()` | None | Permitted enquiries and response fields; `can_send` / `can_respond` guide UI controls |
 | `respondSupplyEnquiry(id, availability, quantity, deliveryDate)` | `available`, `partial` or `unavailable`; ISO date or null | Saved response; identical repeated saves do not duplicate events |
+
+Allocation-specific exports (`fetchAllocationQueue`, `reviewAllocation`, `configureAllocationPool`, `allocateNext`, `cancelAllocation`) are specified in [ALLOCATION.md](ALLOCATION.md).
 
 For external enquiries, the requesting department comes from the authenticated hospital profile. The hospital-only reason is omitted (returned null) to suppliers. Neither requester names nor patient details are included in supplier results. Staff and suppliers cannot read the underlying enquiry, membership or event tables directly.
 

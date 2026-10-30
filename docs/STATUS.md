@@ -2,6 +2,12 @@
 
 > Allocation upgrade: [Equipment allocation MVP](ALLOCATION.md) supersedes the earlier direct-request/approve browser flow on this branch. Requests now enter an independently reviewed queue; source reserve configuration and Allocate next create the reserved transfer. See that guide for the exact priority/fairness policy, API contract, migration and verification limits.
 
+## Allocation extension — verified 30 October
+
+Both timestamped allocation migrations are applied. The queue, reviewed priority, equal-unit sharing, source reserve, idempotent saves and atomic reservation are implemented on the PR branch. Local tests passed, and GitHub Actions run 41137469424 passed real PostgreSQL 17 concurrent-session checks. Hosted queue/supplier assertions passed and rolled back: nine original assets, zero test transfers/enquiries/queued requests. Follow-up advisors found no unindexed foreign keys on the new allocation tables.
+
+No actual account roles were changed. Configure source reserve pools and review request priorities using approved demo identities before the real browser acceptance test. PR merge and Pages deployment remain pending. [ALLOCATION.md](ALLOCATION.md) contains current contracts and limits; the following snapshot records the earlier workflow upgrade.
+
 This dated snapshot supersedes the older status below for the workflow upgrade. Source: branch `farhan/persisted-workflows`, [draft PR #4](https://github.com/harman-06/capstone/pull/4). See [PROJECT_GUIDE.md](PROJECT_GUIDE.md) for what/why/how explanations and the next-step acceptance sequence.
 
 | Area | Verified result | Remaining work |

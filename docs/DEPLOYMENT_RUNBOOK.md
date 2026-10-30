@@ -4,11 +4,11 @@
 
 ## Current status and installation choice
 
-The workflow branch adds authenticated request/decision RPCs and a supplier enquiry backend to the existing equipment integration. Migrations 07 and 08 are already applied to the hosted Nexora Health project. The frontend changes remain in [draft PR #4](https://github.com/harman-06/capstone/pull/4). Read [STATUS.md](STATUS.md) for dated evidence and [PROJECT_GUIDE.md](PROJECT_GUIDE.md) for the ordered release steps.
+The workflow branch adds authenticated request/decision RPCs and a supplier enquiry backend to the existing equipment integration. Migrations 07/08 and both timestamped allocation migrations are already applied to the hosted Nexora Health project. The frontend changes remain in [draft PR #4](https://github.com/harman-06/capstone/pull/4). Read [STATUS.md](STATUS.md) for dated evidence and [PROJECT_GUIDE.md](PROJECT_GUIDE.md) for the ordered release steps.
 
 For the existing hosted project, do not create a replacement project or rerun the original schema. Verify the installed migration versions, review the demo account roles/memberships, run read-only health checks, then perform real-account browser acceptance. Only merge and verify Pages after the release criteria pass. No current user roles should be inferred from the demo role picker.
 
-The initial-installation instructions below apply only to a new empty project. After files 00–05, run `07_authenticated_workflows.sql` then `08_supplier_enquiries.sql` to reproduce the current backend. `06_provision_member.example.sql` is an example for reviewed provisioning, not a mandatory blind execution step. Run `09_workflow_health.sql` after upgrading. Never rerun `04_rls.sql` after 07/08 without reviewing its original function-grant reset.
+The initial-installation instructions below apply only to a new empty project. After files 00–05, run `07_authenticated_workflows.sql` then `08_supplier_enquiries.sql` to reproduce the current backend. `06_provision_member.example.sql` is an example for reviewed provisioning, not a mandatory blind execution step. Then apply the two files under `supabase/migrations/` in timestamp order for the allocation extension. Run `09_workflow_health.sql` after upgrading. Never rerun `04_rls.sql` after 07/08 without reviewing its original function-grant reset.
 
 Medicine, patient, appointment and notification examples remain synthetic. Supplier UI, account provisioning and refresh are separate remaining integration work.
 

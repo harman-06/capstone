@@ -66,7 +66,7 @@ The Requests page now shows the allocation queue above transfer history. It offe
 
 ## Installation and verification
 
-Apply `supabase/migrations/20261030221131_fair_equipment_allocation.sql` after 07/08 on an existing project. This was generated with `supabase migration new`; it is an additive schema migration and preserves equipment and transfer records. It changes the old browser workflow contract to prevent priority bypass. Publish the matching frontend before users rely on the new actions. Never rerun the original schema or 04 RLS after upgrading.
+Apply `supabase/migrations/20261030221131_fair_equipment_allocation.sql` after 07/08 on an existing project, followed by `20261030222202_allocation_lookup_indexes.sql` from the same directory. The follow-up adds foreign-key/history indexes and puts pending requests before completed history. This was generated with `supabase migration new`; it is an additive schema migration and preserves equipment and transfer records. It changes the old browser workflow contract to prevent priority bypass. Publish the matching frontend before users rely on the new actions. Never rerun the original schema or 04 RLS after upgrading.
 
 `npm test` runs original schema tests, old-version workflow regression tests, new allocation database tests and JavaScript tests. The older workflow test intentionally installs only 07/08; allocation tests install the new migration too.
 
@@ -83,3 +83,15 @@ The previously observed role-mapping gap remains: actual demo identities require
 - [PostgreSQL 17 explicit locking](https://www.postgresql.org/docs/17/explicit-locking.html): pool/asset row locks and transaction lifetime.
 - [Supabase functions](https://supabase.com/docs/guides/database/functions): explicit function privileges and private privileged code.
 - [Project guide](PROJECT_GUIDE.md): team handover and broader proposed capabilities.
+
+## Observed verification — 30 October 2026
+
+- Local full suite passed: original schema, supplier workflows, allocation rules, 12 JavaScript tests, zero failures.
+- GitHub Actions run [41137469424](https://github.com/harman-06/capstone/actions/runs/41137469424), job `allocation`, passed both `npm test` and the independent-session PostgreSQL 17 concurrency test. This run verified the primary allocation migration; the follow-up index/list-order migration is included in subsequent runs.
+- Both allocation migrations were applied to the hosted Nexora project. Hosted queue-plus-supplier rollback assertions passed: nine original assets, zero transfers, zero supplier enquiries and zero allocation requests after rollback.
+- All four new tables had RLS enabled and denied direct authenticated reads/writes. No public `nh_api_*` wrapper was SECURITY DEFINER or executable by anon.
+- Existing public-definer/password-protection warnings remain described in STATUS.md. RPC-only tables have intentional RLS-without-policy informational findings. The follow-up indexes address the two new missing-FK-index findings; old schema findings are outside this change. See the [advisor explanation](https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys).
+
+These checks establish tested prototype behaviour, not a universal security or optimal-performance guarantee. Real-account browser acceptance and Pages release remain pending reviewed account provisioning.
+
+Follow-up verification: the index/list-order migration applied successfully; performance advisors reported no remaining unindexed foreign keys on the new allocation tables.
