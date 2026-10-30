@@ -142,7 +142,10 @@ body.clock-visible #clock{opacity:1;transform:none}
      backdrop-filter:blur(var(--blur));
      color:var(--bad);
      border-radius: 9999px;
-     display:flexfont-weight:600;
+     display:flex;
+     flex-wrap:wrap;
+     gap:0 .35em;
+     font-weight:600;
      align-items:center;
      justify-content:center;
      text-align:center;
@@ -219,15 +222,16 @@ body.nav-closed #sidebar { margin-left:-232px; }
 #sidebar a.active { box-shadow:inset 3px 0 var(--brand); }
 .nav-icon { width:18px; height:18px; flex:none; opacity:.8; }
 .nav-footer { margin-top:auto; padding:28px 12px 6px; color:var(--muted); font-size:11px; }
-main { padding:32px; max-width:1500px; }
+main { padding:20px 32px 24px; max-width:1500px; }
 h1 { font-size:28px; letter-spacing:-.7px; margin-bottom:12px; }
 h2 { letter-spacing:-.5px; } h3 { font-size:16px; }
 .card { padding:22px; border-radius:var(--r); box-shadow: var(--shadow-deep); overflow:auto; }
-.dash { gap:20px; }
-.dash .card { padding:20px 22px; }
-.greeting-bar { top:72px; margin-bottom:18px; padding:8px 0 16px; }
+.dash { gap:14px; }
+.dash .card { padding:16px 20px; }
+.greeting-bar { top:72px; margin-bottom:6px; padding:4px 0 6px; }
 .greeting-bar h1 { letter-spacing:-1px; }
 .row { padding:12px 0; align-items:center; }
+.dash .row { padding:8px 0; }   /* tighter rows inside dashboard cards only */
 .muted { font-size:14px; }
 .tabs { width:fit-content; padding:4px; margin:20px 0; }
 .tabs a { border-radius:10px; font-size:14px; padding:9px 20px; font-weight:600; }
@@ -340,3 +344,43 @@ body.signed-out .database-controls > form { width:44%; margin-left:auto; }
 @media(max-width:760px){
   .database-controls p { max-width:45vw; }
 }
+
+/* ============================================================================
+   ADDED BY HARMAN — mobile navigation.
+   1) Dim backdrop behind the open drawer + a width cap so it can't cover the
+      whole phone screen. Tapping the dimmed area closes it (click listener in
+      js/main.js).
+   2) Bottom tab bar (built by js/nav.js) with the 4 most useful sections for
+      the signed-in role plus a "More" button that opens the full drawer.
+   ============================================================================ */
+.tabbar { display:none; }
+
+@media(max-width:760px){
+  body:not(.nav-closed)::after{
+    content:"";
+    position:fixed; inset:64px 0 0 0;
+    background:rgba(23,48,71,0.35);
+    z-index:3;
+  }
+  #sidebar { width:min(232px, 80vw); }
+
+  .tabbar{
+    display:flex; position:fixed; left:0; right:0; bottom:0; z-index:2;
+    justify-content:space-around; align-items:stretch; gap:4px;
+    padding:6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    background:var(--surface);
+    backdrop-filter:blur(var(--blur)); -webkit-backdrop-filter:blur(var(--blur));
+    border-top:1px solid rgba(255,255,255,0.5);
+    box-shadow:0 -4px 20px rgba(23,48,71,0.08);
+  }
+  .tabbar a, .tabbar button, .tabbar button:hover{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    padding:6px 4px; border:0; border-radius:12px;
+    background:none; box-shadow:none; backdrop-filter:none;
+    font-size:10px; font-weight:600; color:var(--ink); text-decoration:none; cursor:pointer;
+  }
+  .tabbar a.active{ background:var(--tint); }
+  .tabbar .nav-icon{ width:20px; height:20px; opacity:.85; }
+  main{ padding-bottom:88px; }   /* keep page content clear of the tab bar */
+}
+body.signed-out .tabbar{ display:none !important; }
