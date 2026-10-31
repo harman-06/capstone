@@ -6,7 +6,7 @@ UPDATE public.users SET auth_subject='a6f609c4-bca4-4a3b-9e33-e18a15b99a08'     
 
 -- Emergency charge nurse, scoped to the Emergency department only
 INSERT INTO public.users(auth_subject,email,display_name,home_department_id)
-SELECT '<ER_UUID>','er.charge@example.test','ER Test Charge Nurse',location_id FROM public.locations WHERE code='ER';
+SELECT '57d007dd-27dd-4150-8105-782bc6511955','er.charge@example.test','ER Test Charge Nurse',location_id FROM public.locations WHERE code='ER';
 INSERT INTO public.user_role_assignments(user_id,role_id,scope_location_id)
 SELECT u.user_id,r.role_id,d.location_id FROM public.users u,public.roles r,public.locations d
 WHERE u.email='er.charge@example.test' AND r.role_key='chargeNurse' AND d.code='ER';
@@ -17,7 +17,7 @@ SELECT location_id,'Demo Supplier A' FROM public.locations WHERE code='NDH' ON C
 INSERT INTO public.nh_suppliers(hospital_id,name)
 SELECT location_id,'Demo Supplier B' FROM public.locations WHERE code='NDH' ON CONFLICT DO NOTHING;
 INSERT INTO public.nh_supplier_memberships(auth_subject,supplier_id)
-SELECT '<SUPPLIER_A_UUID>',supplier_id FROM public.nh_suppliers WHERE name='Demo Supplier A' ON CONFLICT DO NOTHING;
+SELECT '9c3d5a52-7298-471a-a2c6-002671d16a56',supplier_id FROM public.nh_suppliers WHERE name='Demo Supplier A' ON CONFLICT DO NOTHING;
 INSERT INTO public.nh_supplier_memberships(auth_subject,supplier_id)
-SELECT '<SUPPLIER_B_UUID>',supplier_id FROM public.nh_suppliers WHERE name='Demo Supplier B' ON CONFLICT DO NOTHING;
+SELECT 'd10e674b-67b0-4dc1-9322-705c6447c324',supplier_id FROM public.nh_suppliers WHERE name='Demo Supplier B' ON CONFLICT DO NOTHING;
 COMMIT;
