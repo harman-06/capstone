@@ -1,4 +1,4 @@
-import { isConfigured, isSignedIn, signIn, signOut } from './api.js';
+import { isConfigured, isSignedIn, signIn, signOut, onAuthChange } from './api.js';
 import { reloadEquipment, getDataSource } from './data.js';
 export function mountDatabaseControls(refresh) {
   const panel = document.getElementById('database-controls');
@@ -17,6 +17,7 @@ export function mountDatabaseControls(refresh) {
     document.getElementById('signin-heading').hidden = signedIn;
     document.getElementById('signin-intro').hidden = signedIn;
   }
+  onAuthChange(syncVisibility);
   syncVisibility();
   status.textContent = 'Sign in to continue.';
   if (!isConfigured()) { form.hidden = true; status.textContent = 'Sign-in is unavailable. Please contact your administrator.'; return; }

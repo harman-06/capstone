@@ -1,3 +1,4 @@
+import { onAuthChange } from './api.js';
 // NEW FILE (Harman): one generic modal dialog, reused by the Inventory item
 // "administer" flow (prerequisite check + emergency override) and by
 // "Book a new appointment" on the Patient Profile and Appointments pages.
@@ -5,6 +6,7 @@
 // markup in every feature that needs a popup.
 
 let host;
+onAuthChange(() => { if (host) host.innerHTML = ''; });
 function ensureHost() {
   if (host) return host;
   host = document.createElement('div');
@@ -43,7 +45,8 @@ export function openModal({ title, bodyHtml, submitLabel = 'Confirm', onMount, o
     </div>`;
 
   const form = el.querySelector('form.modal-body');
-  const close = () => { el.innerHTML = ''; };
+  let busy = false;
+  const close = () => { if (!busy && el.querySelector('form.modal-body') === form) el.innerHTML = ''; };
 
   el.querySelector('.modal-close').onclick = close;
   el.querySelector('.modal-cancel').onclick = close;
@@ -51,9 +54,20 @@ export function openModal({ title, bodyHtml, submitLabel = 'Confirm', onMount, o
   el.querySelector('.modal-backdrop').addEventListener('click', e => {
     if (e.target.classList.contains('modal-backdrop')) close();
   });
-  el.querySelector('.modal-submit').onclick = () => {
-    const result = onSubmit?.(form);
-    if (result !== false) close();   // onSubmit returning false means "stay open"
+  const submit = el.querySelector('.modal-submit');
+  submit.onclick = async () => {
+    if (busy || form.reportValidity?.() === false) return;
+    busy = true; submit.disabled = true;
+    try {
+      const result = await onSubmit?.(form);
+      busy = false;
+      if (result !== false) close();
+    } catch (error) {
+      // A failed database save stays open. No success entry or demo fallback is created.
+      let message = form.querySelector('[data-save-error]');
+      if (!message) { message = document.createElement('p'); message.dataset.saveError = ''; message.setAttribute('role','alert'); form.appendChild(message); }
+      message.textContent = error.message;
+    } finally { busy = false; submit.disabled = false; }
   };
 
   onMount?.(form);
