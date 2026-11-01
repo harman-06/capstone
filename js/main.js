@@ -1,3 +1,5 @@
+import { workspace } from './workspace.js';
+import { operations, supplies } from './pages/operations.js';
 // Boot file.
 // Constructs the  site by importing everything from the other files.
 import { ROLES, session, applyPermissions } from './roles.js';
@@ -16,7 +18,8 @@ import * as pg from './pages/other.js';
 // Path URL -> page function.
 // The last entry (.*) is the 404 fallback. Add a page here once it exists.
 const routes = [
-  [/^\/dashboard$/, dashboard],
+  [/^\/supplies$/, supplies],
+  [/^\/dashboard$/, operations],
   [/^\/appointments$/, pg.appointments],
   [/^\/patients$/, pg.patients],
   [/^\/patients\/(\w+)$/, pg.patientProfile],
@@ -44,14 +47,16 @@ tick(); setInterval(tick, 30000);
 // page handler function
 // checks status / context, loads page.
 function onRoute(handler, ctx) {
-  if (!isSignedIn()) { app.replaceChildren(); return; }
+  if (!isSignedIn() || !workspace) { app.replaceChildren(); return; }
   app.classList.remove('page-enter'); void app.offsetWidth; app.classList.add('page-enter');
   document.body.classList.add('clock-visible');   // other pages: clock always shown
   scrollTo(0, 0);
+  if (!['/dashboard','/inventory','/units','/requests','/supplies'].includes(ctx.path) && !ctx.path.startsWith('/inventory/')) { location.hash='#/dashboard'; return; }
+  if (workspace.kind === 'supplier' && !['/dashboard','/supplies'].includes(ctx.path)) { location.hash='#/supplies'; return; }
   handler(app, ctx);    // render the page into #app
   applyPermissions(app);    // roles.js: hide/lock/mask anything with [data-cap] for this role.
   renderNav(ctx.path);   // rebuild the sidebar, highlighting the active route.
-  who.textContent = ROLES[session.role].user;
+  who.textContent = `${workspace.name} · ${ROLES[session.role].label}`;
 }
 
 // app start
@@ -63,11 +68,7 @@ mountStatusBarTooltip();           // ADDED (Harman): full status text on hover 
 // Demo role switcher: lets anyone signed in preview how the UI looks per
 // role. Does NOT change real database permissions — those come from Supabase Auth/RLS, independent of this dropdown.
 // this is just for display/preview purposes while we're testing the site
-sw.innerHTML = Object.entries(ROLES).map(([k, r]) => `<option value="${k}">${r.label}</option>`).join('');
-sw.onchange = () => {
-  session.role = sw.value;
-  if (location.hash === '#/dashboard' || !location.hash) refresh(); else location.hash = '#/dashboard';
-};
+sw.closest('label').hidden = true;
 
 // ADDED (Harman): mobile sidebar overhaul.
 // setNavOpen() is the single place that opens/closes the sidebar, so every
@@ -86,7 +87,7 @@ setNavOpen(innerWidth >= 760); // open by default on desktop, closed by default 
 // Tap/click anywhere that isn't the sidebar or the menu button closes it —
 // works identically on desktop and mobile, no separate touch handling needed.
 document.addEventListener('click', e => {
-  if (!document.body.classList.contains('nav-closed') &&
+  if (innerWidth<=760 && !document.body.classList.contains('nav-closed') &&
       !e.target.closest('#sidebar') &&
       !e.target.closest('#menu-btn')) {
     setNavOpen(false);
@@ -94,7 +95,7 @@ document.addEventListener('click', e => {
 });
 // Picking a nav link also closes the drawer, so you don't land on the new
 // page with it still covering the screen on mobile.
-addEventListener('hashchange', () => setNavOpen(false));
+addEventListener('hashchange', () => { if(innerWidth<=760) setNavOpen(false); });
 // If the window is resized past the mobile breakpoint while the drawer's
 // scroll-lock is active, release it (desktop should never have a locked scroll).
 addEventListener('resize', () => { if (innerWidth > 760) document.body.style.overflow = ''; });

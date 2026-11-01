@@ -3,6 +3,8 @@ const CLINICAL = ['appointments.view','patients.view','inventory.view','inventor
 const STAFF_DASH = ['greeting','schedule','notifications','patients'];
 
 export const ROLES = {
+  supplier: {label:'Supplier', scope:'none', caps:[], dashboard:[]},
+  staff: {label:'Staff', scope:'unit', caps:['inventory.view'], dashboard:[]},
   doctor:      { label:'Doctor', user:'Dr. Smith', scope:'all', dashboard:STAFF_DASH,
                  caps:[...CLINICAL,'patients.viewSensitive','meds.prescribe','transfers.request','transfers.approve'] },
   chargeNurse: { label:'Charge nurse', user:'Nadia Ali', scope:'unit', dashboard:STAFF_DASH,

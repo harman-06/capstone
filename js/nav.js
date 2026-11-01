@@ -1,3 +1,4 @@
+import { workspace } from './workspace.js';
 // Builds the sidebar from a single list of entries, filtering out any item the current role can't access.
 // Built from one config array below - add nav items here, not in HTML. 
 // This helps make scalability very easy, because as we expand the project more and more, adding a new nav item is as simple as one line. 
@@ -71,7 +72,8 @@ function renderTabBar(current, allowed) {
 // Rebuilds #sidebar for the current route and role. Called from main.js after every navigation. 
 // `current` is the active path, used to mark the matching link as .active / aria-current.
 export function renderNav(current) {
-  const allowed = NAV.filter(n => !n.cap || can(n.cap) !== 'deny');
+  const allowed = NAV.filter(n => ['/dashboard','/inventory','/units','/requests'].includes(n.route) && (workspace?.kind !== 'supplier' || n.route === '/dashboard') && (!n.cap || can(n.cap) !== 'deny'));
+  allowed.push({label:'Supply enquiries',route:'/supplies',icon:icons[6]});
   document.getElementById('sidebar').innerHTML = '<span class="nav-caption">WORKSPACE</span>' + allowed
     .map(n => `<a href="#${n.route}" class="${current.startsWith(n.route) ? 'active' : ''}" ${current.startsWith(n.route) ? 'aria-current="page"' : ''}>${svg(n.icon)}${n.label}</a>`)
     .join('') + '<span class="nav-footer">Nexora Health<br>Capstone demonstration</span>';

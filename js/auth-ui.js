@@ -1,3 +1,4 @@
+import { workspace, loadWorkspace } from './workspace.js';
 import { isConfigured, isSignedIn, signIn, signOut, onAuthChange } from './api.js';
 import { reloadEquipment, getDataSource } from './data.js';
 export function mountDatabaseControls(refresh) {
@@ -8,7 +9,7 @@ export function mountDatabaseControls(refresh) {
   const reload = document.getElementById('database-refresh');
   const message = document.getElementById('database-auth-message');
   function syncVisibility() {
-    const signedIn = isSignedIn();
+    const signedIn = isSignedIn() && Boolean(workspace);
     document.querySelectorAll('[data-auth-required]').forEach(el => el.hidden = !signedIn);
     document.body.classList.toggle('signed-out', !signedIn);
     form.hidden = signedIn;
@@ -29,8 +30,11 @@ export function mountDatabaseControls(refresh) {
     try {
       await action();
       syncVisibility();
-      await reloadEquipment();
-      status.textContent = getDataSource();
+      if (isSignedIn()) {
+        await loadWorkspace();
+        if (workspace.kind === 'staff') await reloadEquipment();
+      }
+      status.textContent = workspace ? `${workspace.name} · ${workspace.unit} · Updated ${new Date().toLocaleTimeString()}` : 'Sign in to continue.';
       refresh();
     } catch (error) { message.textContent = error.message; }
     finally { syncVisibility(); busy = false; panel.querySelectorAll('button').forEach(b => b.disabled = false); }
@@ -41,7 +45,7 @@ export function mountDatabaseControls(refresh) {
     form.elements.password.value = '';
     await run(async () => {
       await signIn(form.elements.email.value.trim(), password);
-      message.textContent = 'Signed in. Session ends when this page reloads. Demo roles do not change database access.';
+      message.textContent = '';
     });
   });
   logout.addEventListener('click', () => run(async () => {
