@@ -133,3 +133,5 @@ export const respondSupplyEnquiry = (enquiryId, availability, quantity, delivery
   p_enquiry_id: enquiryId, p_availability: availability,
   p_available_quantity: quantity, p_estimated_delivery_date: deliveryDate
 });
+
+export const fetchWorkspace = () => rpc('nh_api_workspace');

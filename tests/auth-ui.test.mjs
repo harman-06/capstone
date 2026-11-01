@@ -17,6 +17,7 @@ test('content stays hidden on failed login and hides immediately during sign-out
   let finishLogout;
   globalThis.fetch = async url => {
     if (url.includes('/auth/v1/token')) return { ok: loginAllowed, status: 400, json: async () => ({ access_token: 'test-jwt', refresh_token: 'test-refresh', expires_in: 3600 }) };
+    if (url.includes('/rpc/nh_api_workspace')) return {ok:true,json:async()=>({kind:'staff',name:'Test nurse',unit:'Cardiology',roles:['nurse']})};
     if (url.includes('/auth/v1/logout')) return new Promise(resolve => { finishLogout = () => resolve({ ok: true }); });
     return { ok: true, json: async () => url.includes('frontend_units_v') ? [{ id: 'unit' }] : [] };
   };
