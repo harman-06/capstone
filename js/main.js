@@ -1,3 +1,4 @@
+import { accounts } from './pages/accounts.js';
 import { workspace } from './workspace.js';
 import { operations, supplies } from './pages/operations.js';
 // Boot file.
@@ -18,6 +19,7 @@ import * as pg from './pages/other.js';
 // Path URL -> page function.
 // The last entry (.*) is the 404 fallback. Add a page here once it exists.
 const routes = [
+  [/^\/accounts$/, accounts],
   [/^\/supplies$/, supplies],
   [/^\/dashboard$/, operations],
   [/^\/appointments$/, pg.appointments],
@@ -51,6 +53,8 @@ function onRoute(handler, ctx) {
   app.classList.remove('page-enter'); void app.offsetWidth; app.classList.add('page-enter');
   document.body.classList.add('clock-visible');   // other pages: clock always shown
   scrollTo(0, 0);
+  if (workspace.roles.includes('admin')) { accounts(app); renderNav('/accounts'); who.textContent=workspace.name+' · IT administrator'; return; }
+  if (ctx.path==='/accounts') { location.hash='#/dashboard'; return; }
   if (!['/dashboard','/inventory','/units','/requests','/supplies'].includes(ctx.path) && !ctx.path.startsWith('/inventory/')) { location.hash='#/dashboard'; return; }
   if (workspace.kind === 'supplier' && !['/dashboard','/supplies'].includes(ctx.path)) { location.hash='#/supplies'; return; }
   handler(app, ctx);    // render the page into #app

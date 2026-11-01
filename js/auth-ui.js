@@ -32,7 +32,7 @@ export function mountDatabaseControls(refresh) {
       syncVisibility();
       if (isSignedIn()) {
         await loadWorkspace();
-        if (workspace.kind === 'staff') await reloadEquipment();
+        if (workspace.kind === 'staff' && !workspace.roles.includes('admin')) await reloadEquipment();
       }
       status.textContent = workspace ? `${workspace.name} · ${workspace.unit} · Updated ${new Date().toLocaleTimeString()}` : 'Sign in to continue.';
       refresh();

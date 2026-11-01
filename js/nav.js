@@ -39,7 +39,7 @@ const svg = path => `<svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24
 // gets Dashboard / Patients / Appointments / Inventory, while a patient gets
 // Dashboard / My Health / Appointments. Everything else stays in the drawer,
 // reachable through the "More" tab. CSS only shows the bar on narrow screens.
-const TAB_PRIORITY = ['/dashboard', '/patients', '/my-health', '/appointments', '/inventory', '/requests', '/users'];
+const TAB_PRIORITY = ['/accounts', '/supplies', '/dashboard', '/patients', '/my-health', '/appointments', '/inventory', '/requests', '/users'];
 const MORE_ICON = 'M4 6h16 M4 12h16 M4 18h16';
 let tabbar;   // created once on first render, then reused
 
@@ -72,6 +72,7 @@ function renderTabBar(current, allowed) {
 // Rebuilds #sidebar for the current route and role. Called from main.js after every navigation. 
 // `current` is the active path, used to mark the matching link as .active / aria-current.
 export function renderNav(current) {
+  if(workspace?.roles.includes('admin')) { document.getElementById('sidebar').innerHTML='<span class="nav-caption">IT ADMINISTRATION</span><a href="#/accounts" class="active">Account monitoring</a>'; renderTabBar('/accounts',[{label:'Accounts',route:'/accounts',icon:icons[7]}]); return; }
   const allowed = NAV.filter(n => ['/dashboard','/inventory','/units','/requests'].includes(n.route) && (workspace?.kind !== 'supplier' || n.route === '/dashboard') && (!n.cap || can(n.cap) !== 'deny'));
   allowed.push({label:'Supply enquiries',route:'/supplies',icon:icons[6]});
   document.getElementById('sidebar').innerHTML = '<span class="nav-caption">WORKSPACE</span>' + allowed

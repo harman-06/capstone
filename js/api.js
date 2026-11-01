@@ -135,3 +135,5 @@ export const respondSupplyEnquiry = (enquiryId, availability, quantity, delivery
 });
 
 export const fetchWorkspace = () => rpc('nh_api_workspace');
+
+export const fetchAccounts = () => rpc('nh_api_account_monitor');
