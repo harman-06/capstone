@@ -27,7 +27,7 @@ BEGIN
    IF EXISTS(SELECT 1 FROM public.users WHERE auth_subject=subject AND email IS DISTINCT FROM expected.email)
    THEN RAISE EXCEPTION 'Auth identity is already linked to another profile'; END IF;
    IF EXISTS(SELECT 1 FROM public.users u JOIN public.user_role_assignments a USING(user_id) JOIN public.roles r USING(role_id)
-    WHERE u.auth_subject=subject AND (r.role_key<>expected.role_key OR a.scope_location_id<>department))
+    WHERE u.auth_subject=subject AND (r.role_key<>expected.role_key OR (a.scope_location_id<>department AND NOT (expected.email='coordinator.demo@nexora.example' AND a.scope_location_id IN (SELECT location_id FROM public.locations WHERE code='CARD' AND parent_location_id=hospital AND is_active)))))
    THEN RAISE EXCEPTION 'Demo staff account has additional roles; review rather than silently changing access'; END IF;
    INSERT INTO public.users(auth_subject,email,display_name,home_department_id)
    VALUES(subject,expected.email,expected.label,department) ON CONFLICT(email) DO NOTHING;
@@ -44,8 +44,11 @@ BEGIN
    INSERT INTO public.nh_supplier_memberships(auth_subject,supplier_id) VALUES(subject,organisation) ON CONFLICT DO NOTHING;
   END IF;
  END LOOP;
- ASSERT (SELECT count(*) FROM public.users u JOIN public.user_role_assignments a USING(user_id) WHERE u.email IN ('nurse.demo@nexora.example','coordinator.demo@nexora.example'))=2,'Expected exactly two scoped demo staff assignments';
+ -- Coordinator covers the nurse's Cardiology unit as well as Emergency.
+ INSERT INTO public.user_role_assignments(user_id,role_id,scope_location_id)
+ SELECT u.user_id,r.role_id,l.location_id FROM public.users u JOIN public.roles r ON r.role_key='chargeNurse' JOIN public.locations l ON l.code='CARD' AND l.parent_location_id=hospital AND l.is_active WHERE u.email='coordinator.demo@nexora.example' ON CONFLICT DO NOTHING;
+ ASSERT (SELECT count(*) FROM public.users u JOIN public.user_role_assignments a USING(user_id) WHERE u.email IN ('nurse.demo@nexora.example','coordinator.demo@nexora.example'))=3,'Expected exactly three scoped demo staff assignments';
  ASSERT (SELECT count(*) FROM public.nh_supplier_memberships m JOIN auth.users u ON u.id=m.auth_subject WHERE u.email IN ('supplier.a@nexora.example','supplier.b@nexora.example') AND m.is_active)=2,'Expected two isolated supplier memberships';
 END $$;
 COMMIT;
-SELECT 'Demo access configured: nurse/Cardiology, coordinator/Emergency, separate suppliers A/B. Existing personal accounts unchanged.' AS result;
+SELECT 'Demo access configured: nurse/Cardiology, coordinator/Emergency and Cardiology, separate suppliers A/B. Existing personal accounts unchanged.' AS result;
