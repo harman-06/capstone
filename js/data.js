@@ -65,8 +65,7 @@ export const getNotifications = () => db.notifications.filter(n => can(n.cap) ==
 export const getUnits = () => db.units;
 
 // ============================================================================
-// ADDED BY HARMAN — everything below is new, nothing above this line changed.
-// Supports: the Inventory item detail page, the patient profile expansion,
+//  the Inventory item detail page, the patient profile expansion,
 // appointment booking, and the Requests page.
 //
 // Patient, medicine, appointment and QC helpers remain synthetic/in-memory.
@@ -75,7 +74,7 @@ export const getUnits = () => db.units;
 // ============================================================================
 
 // NOTE: getInventory() itself is intentionally left exactly as it was
-// (db.inventory, no wrapping) — a teammate's test in tests/frontend.test.mjs
+// (db.inventory, no wrapping): a teammate's test in tests/frontend.test.mjs
 // asserts its exact output shape in the "live fetch failed" fallback case,
 // and changing that shape would break it. The item detail page only needs
 // defaults for a SINGLE looked-up item, so that's where defaulting happens
