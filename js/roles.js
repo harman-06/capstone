@@ -1,4 +1,5 @@
 // STEP 2: roles and permissions. New role = one new entry below.
+// where each role is defined
 const CLINICAL = ['appointments.view','patients.view','inventory.view','inventory.update','requests.view'];
 const STAFF_DASH = ['greeting','schedule','notifications','patients'];
 
