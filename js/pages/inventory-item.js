@@ -1,6 +1,4 @@
 import { isConfigured, requestEquipment } from '../api.js';
-// NEW FILE (Harman): Inventory item detail subpage.
-// Route: #/inventory/:id (added to js/main.js's route list)
 //
 // Shows an item's description, quantity on hand, and unit location, and lets
 // a qualified role select a quantity + patient and administer it:
@@ -51,8 +49,6 @@ function renderOtherUnits(item) {
 const getUnitOptions = item =>
   getInventory().filter(i => i.name === item.name && i.id !== item.id && (isConfigured() || (i.qty > 0 && i.status !== 'out')));
 
-// ----------------------------------------------------------------------------
-
 export function inventoryItem(el, { params }) {
   const item = getInventoryItem(params[0]);
   if (!item) {
@@ -89,13 +85,16 @@ export function inventoryItem(el, { params }) {
       <div id="activity-list"></div>
     </div>`);
 
+  // Request Button
   el.querySelector('#request-btn').addEventListener('click', () => {
-    // Explicit permission check here (rather than relying on applyPermissions'
+    // 
+    //
+  // Explicit permission check here (rather than relying on applyPermissions'
     // own click-intercept) so a nurse can never reach the modal for a
     // controlled item even for a moment — the check runs before anything else.
     const cap = item.requiresApproval ? 'meds.administerControlled' : 'inventory.update';
     const state = can(cap);
-    if (state === 'deny') return;                 // button wouldn't normally be visible for this role
+    if (state === 'deny') return;          
     if (state === 'approval') { requestApproval(cap); return; }
     item.type === 'medicine' ? openAdministerModal(item, patients, el, activity) : openTransferModal(item, el, activity);
   });
