@@ -75,7 +75,7 @@ mountStatusBarTooltip();           // ADDED (Harman): full status text on hover 
 // this is just for display/preview purposes while we're testing the site
 sw.closest('label').hidden = true;
 
-// ADDED (Harman): mobile sidebar overhaul.
+// mobile sidebar overhaul
 // setNavOpen() is the single place that opens/closes the sidebar, so every
 // trigger (menu button, outside click, navigating to a new page, resizing
 // past the mobile breakpoint) stays consistent instead of three separate
