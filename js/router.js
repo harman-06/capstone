@@ -1,5 +1,5 @@
 // STEP 1: hash router (#/patients/p1?x=1)
-// splits url into hash & query @ the '?'
+// splits url into path & query @ the '?'
 export function parseHash() {
   const [path, qs = ''] = (location.hash.slice(1) || '/dashboard').split('?');
   return { path, query: Object.fromEntries(new URLSearchParams(qs)) };
