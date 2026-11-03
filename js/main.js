@@ -53,6 +53,7 @@ function onRoute(handler, ctx) {
   app.classList.remove('page-enter'); void app.offsetWidth; app.classList.add('page-enter');
   document.body.classList.add('clock-visible');   // other pages: clock always shown
   scrollTo(0, 0);
+  // rdeirects
   if (workspace.roles.includes('admin')) { accounts(app); renderNav('/accounts'); who.textContent=workspace.name+' · IT administrator'; return; }
   if (ctx.path==='/accounts') { location.hash='#/dashboard'; return; }
   if (!['/dashboard','/inventory','/units','/requests','/supplies'].includes(ctx.path) && !ctx.path.startsWith('/inventory/')) { location.hash='#/dashboard'; return; }
