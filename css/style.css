@@ -1,14 +1,14 @@
 /* shell styles */
 :root{
   --bg:#eef2f0;                 /* flat fallback used by small UI bits (hover states, chips) */
-  --gradient-start:#b8c9cc ;     /* light blue #d3e9ed */
-  --gradient-end:#d4c1a7;     /* light brown/tan fce5c5 */
+  --gradient-start:#fff9f2 ;     /* light blue #d3e9ed */
+  --gradient-end:#ffc275;     /* light brown/tan fce5c5 */
   --surface:rgba(255,255,255,0.23);     /* frosted glass surface */
   --surface-solid:#ffffff;
   --topbar:rgba(255,255,255,0.55);
-  --ink:#000000;--muted:#000000;--brand:rgba(67, 107, 107, 0.7);--tint:rgb(245, 230, 211, 0.5);
+  --ink:#000000;--muted:#000000;--brand:rgba(153, 99, 24,0.6);--tint:rgb(245, 230, 211, 0.5);
   --line:rgba(255, 255, 255, 0);
-  --link:rgb(46, 74, 74);
+  --link:rgb(176, 106, 7);
   --ok:#15803d;--warn:#b45309;--bad:#b42318;
    /* -surface:rgba(255,255,255,0.23);     /* frosted glass surface
   --surface-solid:#ffffff;
@@ -499,7 +499,7 @@ body.pref-reduce-motion * { animation:none !important; transition:none !importan
 
 /* Nexora Health logo sizing */
 .brand-logo {
-    width: 160px;
+    width: 190px;
     height: auto;
     object-fit: contain;
     display: block;
