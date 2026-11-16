@@ -1,106 +1,116 @@
+// Boot file.
+// Builds the site by importing everything from the other files.
 import { accounts } from './pages/accounts.js';
 import { workspace } from './workspace.js';
-import { operations, supplies } from './pages/operations.js';
-// Boot file.
-// Constructs the  site by importing everything from the other files.
-import { ROLES, session, applyPermissions } from './roles.js';
+import { supplies } from './pages/operations.js';
+import { home } from './pages/home.js';
+import { account, settings } from './pages/account.js';
+import { applyPermissions, can } from './roles.js';
 import { loadData } from './data.js';
 import { isSignedIn } from './api.js';
 import { mountDatabaseControls } from './auth-ui.js';
-import { mountStatusBarTooltip } from './status-bar.js';   // ADDED (Harman): hover tooltip for the shrunk status bar
+import { mountStatusBarTooltip } from './status-bar.js';
+import { mountTopbar, refreshTopbar } from './topbar.js';
+import { applyPrefs, getPrefs } from './prefs.js';
 import { startRouter } from './router.js';
 import { renderNav } from './nav.js';
-import { dashboard } from './pages/dashboard.js';
 import { units } from './pages/units.js';
-import { inventoryItem } from './pages/inventory-item.js';   // ADDED (Harman): inventory item detail subpage
+import { inventoryItem } from './pages/inventory-item.js';
 import * as pg from './pages/other.js';
 
-// These are all the routes. 
+// These are all the routes.
 // Path URL -> page function.
 // The last entry (.*) is the 404 fallback. Add a page here once it exists.
 const routes = [
   [/^\/accounts$/, accounts],
   [/^\/supplies$/, supplies],
-  [/^\/dashboard$/, operations],
+  [/^\/dashboard$/, home],
+  [/^\/account$/, account],
+  [/^\/settings$/, settings],
   [/^\/appointments$/, pg.appointments],
   [/^\/patients$/, pg.patients],
   [/^\/patients\/(\w+)$/, pg.patientProfile],
   [/^\/my-health$/, pg.myHealth],
   [/^\/inventory$/, pg.inventory],
-  [/^\/inventory\/([\w-]+)$/, inventoryItem],   // ADDED (Harman): must stay below /inventory above — router.js matches top-down
+  [/^\/inventory\/([\w-]+)$/, inventoryItem],
   [/^\/units$/, units],
   [/^\/requests$/, pg.requests],
-  [/^\/users$/, pg.users],
-  [/^\/help$/, pg.help],
   [/.*/, pg.notFound],
 ];
 
+// Which pages each kind of account may open. Anything else goes back to the dashboard.
+const STAFF_PATHS = ['/dashboard', '/appointments', '/patients', '/inventory', '/units', '/requests', '/supplies', '/account', '/settings'];
+const PATIENT_PATHS = ['/dashboard', '/appointments', '/my-health', '/account', '/settings'];
+const SUPPLIER_PATHS = ['/dashboard', '/supplies', '/account', '/settings'];
+// A page also needs its capability from roles.js (can() returns 'deny' hides it).
+const ROUTE_CAPS = { '/appointments': 'appointments.view', '/patients': 'patients.view', '/my-health': 'profile.own', '/inventory': 'inventory.view', '/units': 'inventory.view', '/requests': 'requests.view' };
+const SUBROUTES = ['/inventory', '/patients'];   // pages that have /<page>/<id> children
+
+function allowed(path) {
+  const base = '/' + path.split('/')[1];
+  const paths = workspace.kind === 'patient' ? PATIENT_PATHS : workspace.kind === 'supplier' ? SUPPLIER_PATHS : STAFF_PATHS;
+  if (!paths.includes(base)) return false;
+  if (path !== base && !SUBROUTES.includes(base)) return false;
+  const cap = ROUTE_CAPS[base];
+  return !cap || can(cap) !== 'deny';
+}
+
 const app = document.getElementById('app');
-const sw = document.getElementById('role-switcher');
-const who = document.getElementById('user-name');
 
 // Top-bar clock (ticks every 30 sec)
-// Shown once the dashboard's own large greeting has scrolled away, or always on other pages.
 const clock = document.getElementById('clock');
 const tick = () => clock.textContent = new Date().toLocaleString('en-CA',
-  { weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+  { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 tick(); setInterval(tick, 30000);
 
-// page handler function
-// checks status / context, loads page.
+// Runs on every navigation: checks sign-in and access, renders the page, then
+// applies permissions, navigation and the top bar.
 function onRoute(handler, ctx) {
   if (!isSignedIn() || !workspace) { app.replaceChildren(); return; }
   app.classList.remove('page-enter'); void app.offsetWidth; app.classList.add('page-enter');
-  document.body.classList.add('clock-visible');   // other pages: clock always shown
+  document.body.classList.add('clock-visible');
   scrollTo(0, 0);
-  // rdeirects
-  if (workspace.roles.includes('admin')) { accounts(app); renderNav('/accounts'); who.textContent=workspace.name+' · IT administrator'; return; }
-  if (ctx.path==='/accounts') { location.hash='#/dashboard'; return; }
-  if (!['/dashboard','/inventory','/units','/requests','/supplies'].includes(ctx.path) && !ctx.path.startsWith('/inventory/')) { location.hash='#/dashboard'; return; }
-  if (workspace.kind === 'supplier' && !['/dashboard','/supplies'].includes(ctx.path)) { location.hash='#/supplies'; return; }
-  handler(app, ctx);    // render the page into #app
-  applyPermissions(app);    // roles.js: hide/lock/mask anything with [data-cap] for this role.
-  renderNav(ctx.path);   // rebuild the sidebar, highlighting the active route.
-  who.textContent = `${workspace.name} · ${ROLES[session.role].label}`;
+  if (workspace.roles.includes('admin')) {
+    // Administrators only see account monitoring plus their own account and settings.
+    if (['/account', '/settings'].includes(ctx.path)) { handler(app, ctx); renderNav(ctx.path); refreshTopbar(); return; }
+    accounts(app); renderNav('/accounts'); refreshTopbar(); return;
+  }
+  if (ctx.path === '/accounts') { location.hash = '#/dashboard'; return; }
+  if (!allowed(ctx.path)) { location.hash = workspace.kind === 'supplier' ? '#/supplies' : '#/dashboard'; return; }
+  handler(app, ctx);        // render the page into #app
+  applyPermissions(app);    // roles.js: hide/lock/mask anything with [data-cap] for this role
+  renderNav(ctx.path);      // rebuild the sidebar, highlighting the active route
+  refreshTopbar();          // name, role, notification bell
 }
 
-// app start
+// App start
+applyPrefs();
+mountTopbar();
 await loadData();    // data.js: load demo JSON, then try live Supabase equipment
 const refresh = startRouter(routes, onRoute);
-mountDatabaseControls(refresh);    // teammate: wires the sign-in form to the auth state
-mountStatusBarTooltip();           // ADDED (Harman): full status text on hover once the bar is shrunk
+mountDatabaseControls(refresh);    // wires the sign-in form to the auth state
+mountStatusBarTooltip();
 
-// Demo role switcher: lets anyone signed in preview how the UI looks per
-// role. Does NOT change real database permissions — those come from Supabase Auth/RLS, independent of this dropdown.
-// this is just for display/preview purposes while we're testing the site
-sw.closest('label').hidden = true;
-
-// mobile sidebar overhaul
-// setNavOpen() is the single place that opens/closes the sidebar, so every
-// trigger (menu button, outside click, navigating to a new page, resizing
-// past the mobile breakpoint) stays consistent instead of three separate
-// ad-hoc class toggles. On narrow screens it also locks background scroll
-// while the drawer is open, so it reads as an overlay rather than content
-// that just happens to sit on top of the page.
+// Sidebar. Open = full width. Collapsed = icons only on desktop, hidden on phones
+// (the bottom tab bar and the drawer take over there).
+// setNavOpen() is the one place that opens or closes it.
+const menuBtn = document.getElementById('menu-btn');
+const isMobile = () => innerWidth <= 760;
 function setNavOpen(open) {
   document.body.classList.toggle('nav-closed', !open);
-  document.body.style.overflow = (open && innerWidth <= 760) ? 'hidden' : '';
+  document.body.style.overflow = (open && isMobile()) ? 'hidden' : '';   // lock page scroll behind the mobile drawer
+  menuBtn.setAttribute('aria-expanded', String(open));
 }
-document.getElementById('menu-btn').onclick = () => setNavOpen(document.body.classList.contains('nav-closed'));
-setNavOpen(innerWidth >= 760); // open by default on desktop, closed by default on mobile
+menuBtn.onclick = () => setNavOpen(document.body.classList.contains('nav-closed'));
+setNavOpen(!isMobile() && !getPrefs().startCollapsed);
 
-// Tap/click anywhere that isn't the sidebar or the menu button closes it —
-// works identically on desktop and mobile, no separate touch handling needed.
+// Clicking or tapping anywhere outside the sidebar collapses it, on desktop and phones alike.
 document.addEventListener('click', e => {
-  if (innerWidth<=760 && !document.body.classList.contains('nav-closed') &&
-      !e.target.closest('#sidebar') &&
-      !e.target.closest('#menu-btn')) {
-    setNavOpen(false);
-  }
+  if (document.body.classList.contains('nav-closed')) return;
+  if (e.target.closest('#sidebar, #menu-btn, #tabbar')) return;
+  setNavOpen(false);
 });
-// Picking a nav link also closes the drawer, so you don't land on the new
-// page with it still covering the screen on mobile.
-addEventListener('hashchange', () => { if(innerWidth<=760) setNavOpen(false); });
-// If the window is resized past the mobile breakpoint while the drawer's
-// scroll-lock is active, release it (desktop should never have a locked scroll).
-addEventListener('resize', () => { if (innerWidth > 760) document.body.style.overflow = ''; });
+// On phones, choosing a page also closes the drawer.
+addEventListener('hashchange', () => { if (isMobile()) setNavOpen(false); });
+// Release the scroll lock if the window grows past the phone breakpoint.
+addEventListener('resize', () => { if (!isMobile()) document.body.style.overflow = ''; });
