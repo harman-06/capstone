@@ -21,6 +21,7 @@ import { isConfigured, requestEquipment } from '../api.js';
 import { ROLES, session, can, requestApproval } from '../roles.js';
 import { getInventoryItem, getInventory, getUnits, getPatients, adjustInventoryQty, addPatientNote, addRequestLogEntry } from '../data.js';
 import { openModal } from '../modal.js';
+import { toast } from '../toast.js';
 
 const page = (title, body) => `<h1>${title}</h1>${body}`;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -112,7 +113,7 @@ function logActivity(el, activity, entry) {
 // changed here; the request stays 'pending' until an approver decides.
 function openTransferModal(item, el, activity) {
   const sources = getUnitOptions(item);
-  if (!sources.length) { alert(`${item.name} is not available in any other unit right now.`); return; }
+  if (!sources.length) { toast(`${item.name} is not available in any other unit right now.`, { error: true }); return; }
   openModal({
     title: `Request ${item.name}`,
     submitLabel: 'Submit request',
@@ -128,11 +129,11 @@ function openTransferModal(item, el, activity) {
       const source = sources.find(s => String(s.id) === form.source.value);
       const quantity = Number(form.quantity.value);
       if (!source || !quantity || quantity < 1 || (!isConfigured() && quantity > source.qty)) {
-        alert('Enter a quantity between 1 and the stock in the chosen unit.');
+        toast('Enter a quantity between 1 and the stock in the chosen unit.', { error: true });
         return false;
       }
       if (isConfigured()) {
-        if (quantity !== 1) { alert('Create one saved request per reusable asset.'); return false; }
+        if (quantity !== 1) { toast('Create one saved request per reusable asset.', { error: true }); return false; }
         const id = await requestEquipment(source.id);
         logActivity(el, activity, {summary: `Queued equipment request ${id}. Open Requests for review and allocation.`, status: 'queued'});
         return;
@@ -160,7 +161,7 @@ function openAdministerModal(item, patients, el, activity) {
       <p class="muted">${item.qty} currently in stock at ${escapeHtml(item.unit)}.</p>`,
     onSubmit(form) {
       const quantity = Number(form.quantity.value);
-      if (!quantity || quantity < 1 || quantity > item.qty) { alert('Enter a quantity between 1 and the available stock.'); return false; }
+      if (!quantity || quantity < 1 || quantity > item.qty) { toast('Enter a quantity between 1 and the available stock.', { error: true }); return false; }
       const patient = patients.find(p => p.id === form.patient.value);
       if (item.prerequisite) runPrerequisiteCheck(item, patient, quantity, el, activity);
       else finalizeAdminister(item, patient, quantity, el, activity, { passed: true });
@@ -214,7 +215,7 @@ function offerEmergencyOverride(item, patient, quantity, el, activity, reading) 
       </label>`,
     onSubmit(form) {
       const reason = form.reason.value.trim();
-      if (!reason) { alert('Enter a reason to proceed with an emergency override.'); return false; }
+      if (!reason) { toast('Enter a reason to proceed with an emergency override.', { error: true }); return false; }
       finalizeAdminister(item, patient, quantity, el, activity, { passed: false, reading, overrideReason: reason });
     },
   });
