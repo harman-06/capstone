@@ -166,3 +166,11 @@ body.clock-visible #clock{opacity:1;transform:none}
 .notif-sub>div{overflow:hidden}
 .notif-group.open .notif-sub{grid-template-rows:1fr}
 .sub-item{display
+
+.brand-logo {
+    width: 160px;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    flex-shrink: 0;
+}
