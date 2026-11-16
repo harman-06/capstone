@@ -54,7 +54,7 @@ export async function reloadEquipment() {
 function scoped(list) {
   const r = ROLES[session.role];
   if (r.scope === 'all') return list;
-  if (r.scope === 'self') return list.filter(x => (x.patientId ?? x.id) === r.patientId);
+  if (r.scope === 'self') return list.filter(x => (x.patientId ?? x.id) === (session.patientId ?? r.patientId));
   if (r.scope === 'unit') return list.filter(x => x.unit === session.unit);
   return [];
 }
@@ -299,6 +299,80 @@ export function getRequestsForMe() {
       db.inventory.find(i => i.id === r.itemId)?.unit === unit
     ))
   );
+}
+
+// ============================================================================
+// Activity events and patient self-service profile edits.
+// In memory only: they last for the page session and are shared by every account
+// that signs in during it, which is how a patient's change shows up for staff.
+// Saving them for real needs database tables and access rules (database teammate).
+// ============================================================================
+let eventSeq = 0;
+const eventLog = [];
+const eventListeners = new Set();
+
+// audience: 'staff' | 'approvers' | `patient:<id>` (see notifications.js)
+export function addEvent(event) {
+  const record = { id: `evt-${++eventSeq}`, at: new Date(), severity: 'info', ...event };
+  eventLog.unshift(record);
+  eventLog.length = Math.min(eventLog.length, 50);
+  eventListeners.forEach(callback => callback(record));
+  return record;
+}
+export const getEvents = () => eventLog;
+export const onEventAdded = callback => { eventListeners.add(callback); return () => eventListeners.delete(callback); };
+
+const PHONE = /^[0-9+()\-.\s]{7,20}$/;
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Checks what a patient typed in the Edit profile form. Returns { ok, errors, value }.
+export function validateProfile(input = {}) {
+  const errors = {};
+  const text = v => String(v ?? '').trim();
+  const phone = text(input.phone);
+  if (phone && !PHONE.test(phone)) errors.phone = 'Enter a valid phone number.';
+  const email = text(input.email);
+  if (email && !EMAIL.test(email)) errors.email = 'Enter a valid email address.';
+  const address = text(input.address);
+  if (address.length > 200) errors.address = 'Address must be 200 characters or fewer.';
+  const number = (raw, low, high, key, label) => {
+    const t = text(raw);
+    if (!t) return null;
+    const n = Number(t);
+    if (!Number.isFinite(n) || n < low || n > high) { errors[key] = `${label} must be between ${low} and ${high}.`; return null; }
+    return n;
+  };
+  const heightCm = number(input.heightCm, 50, 260, 'heightCm', 'Height');
+  const weightKg = number(input.weightKg, 2, 400, 'weightKg', 'Weight');
+  const allergies = text(input.allergies) ? text(input.allergies).split(',').map(a => a.trim()).filter(Boolean) : [];
+  if (allergies.length > 20 || allergies.some(a => a.length > 60)) errors.allergies = 'List up to 20 allergies, each under 60 characters.';
+  const emergency = { name: text(input.emergencyName), phone: text(input.emergencyPhone), relationship: text(input.emergencyRelationship) };
+  if (emergency.name.length > 80 || emergency.relationship.length > 40) errors.emergencyName = 'Emergency contact details are too long.';
+  if (emergency.phone && !PHONE.test(emergency.phone)) errors.emergencyPhone = 'Enter a valid phone number.';
+  return {
+    ok: Object.keys(errors).length === 0,
+    errors,
+    value: { phone, email, address, heightCm, weightKg, allergies, emergencyContact: emergency.name || emergency.phone ? emergency : null },
+  };
+}
+
+// A patient may edit only their own record. Medical ID and date of birth are never editable here.
+export function updatePatientProfile(patientId, input) {
+  const role = ROLES[session.role];
+  if (role.scope !== 'self' || (session.patientId ?? role.patientId) !== patientId) return { ok: false, errors: { form: 'You can only edit your own profile.' } };
+  const patient = db.patients.find(p => p.id === patientId);
+  if (!patient) return { ok: false, errors: { form: 'Profile not found.' } };
+  const { ok, errors, value } = validateProfile(input);
+  if (!ok) return { ok: false, errors };
+  patient.contact = { ...patient.contact, phone: value.phone, email: value.email, address: value.address };
+  patient.heightCm = value.heightCm;
+  patient.weightKg = value.weightKg;
+  patient.allergies = value.allergies;
+  patient.emergencyContact = value.emergencyContact;
+  patient.profileUpdatedAt = new Date().toISOString();
+  patient.profileUpdatedBy = 'patient';
+  addEvent({ audience: 'staff', severity: 'info', text: `${patient.name} updated their profile`, detail: 'Contact details, measurements or allergies changed', target: `#/patients/${patient.id}` });
+  return { ok: true, patient };
 }
 
 // Protected browser state must not survive sign-out, expiry or account changes.
