@@ -13,3 +13,12 @@
 - Configured connection errors clear equipment instead of silently falling back. Unconfigured demo mode remains explicit; medicine demo inventory is preserved.
 - Removed duplicated role-switcher element ID.
 - Database schema setup refuses existing tables. No DROP, TRUNCATE, reset, or deletion migration is included.
+
+## Interface update (Nov 2026)
+- Dashboard copy now reads as a product: time-of-day greeting by name, role and department above it, quick links, no tutorial cards.
+- Top bar: notification bell and account menu (View account, Settings, Refresh equipment, Sign out). The old connection status bar is removed once signed in; messages appear as toasts.
+- Patients, patient profile (notes, booking) and Appointments pages are back, with field-level masking for roles that cannot see sensitive details.
+- Patient accounts: own home page and profile, with editable contact details, measurements, allergies and emergency contact. Changes are visible to staff accounts for the page session only (in memory) until patient data moves into the database.
+- Sidebar collapses to an icon rail on desktop and hides on phones; clicking outside it collapses it again.
+- Shared files touched: js/main.js, js/nav.js, js/roles.js, js/workspace.js (accepts kind "patient"), js/data.js (additions at the end plus one line in scoped()), js/pages/operations.js (copy), js/pages/inventory-item.js (alert popups replaced by toasts).
+- Database follow-up: the workspace function must return { kind: 'patient', name, patientId } for patient accounts, and patient edits, notes and appointments need tables with row-level security.
