@@ -1,8 +1,17 @@
 import { workspace } from '../workspace.js';
-import { getInventory } from '../data.js';
+import { getInventory, getAppointments } from '../data.js';
+import { ROLES, session, can } from '../roles.js';
+import { greeting } from '../greeting.js';
 import { fetchAllocationQueue, fetchSupplyEnquiries, fetchSuppliers, createSupplyEnquiry, sendSupplyEnquiry, respondSupplyEnquiry } from '../api.js';
 import { openModal } from '../modal.js';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// Today's appointments for roles that can see them.
+function todayCard() {
+ if (can('appointments.view') !== 'allow') return '';
+ const rows=getAppointments().filter(a=>a.today).slice(0,5);
+ return `<section class="card"><h2>Today's appointments</h2>${rows.length?rows.map(a=>`<a class="row" href="#/appointments"><b>${esc(a.when)}</b><span>${esc(a.patientName)} · ${esc(a.type)}</span></a>`).join(''):'<p class="muted">No appointments scheduled for today.</p>'}<a class="more" href="#/appointments">View schedule</a></section>`;
+}
 export async function operations(el) {
  const current=workspace;
  el.innerHTML='<h1>Operations overview</h1><p role="status">Loading your workspace…</p>';
@@ -12,10 +21,20 @@ export async function operations(el) {
   const rows=await (supplier?fetchSupplyEnquiries():fetchAllocationQueue());
   if(workspace!==current || !el.isConnected) return;
   const waiting=rows.filter(r=>supplier?r.status==='sent':r.status==='queued');
-  el.innerHTML=`<p class="eyebrow">${esc(current.unit)}</p><h1>${supplier?'Supplier workspace':current.roles.includes('chargeNurse')?'Coordination centre':'Nurse workspace'}</h1><p class="muted">${supplier?'Review assigned enquiries and share availability.':coordinator?'Review priorities, allocate equipment and send approved supplier enquiries.':'Find equipment and track requests from your unit.'}</p>
+  const label=ROLES[session.role]?.label||'Staff';
+  const count=waiting.length;
+  const summary=supplier
+   ?(count?`${count} ${count===1?'enquiry is':'enquiries are'} awaiting your response.`:'No enquiries are awaiting your response.')
+   :coordinator
+   ?(count?`${count} ${count===1?'request is':'requests are'} waiting for review.`:'No requests are waiting for review.')
+   :(rows.length?`${rows.length} open ${rows.length===1?'request':'requests'} from your unit.`:'No open requests from your unit.');
+  const actions=supplier
+   ?'<a class="ops-link" href="#/supplies">Review enquiries →</a>'
+   :`<a class="ops-link" href="#/inventory">Find equipment →</a><a class="ops-link" href="#/requests">Requests →</a>${coordinator?'<a class="ops-link" href="#/supplies">Supply enquiries →</a>':''}`;
+  el.innerHTML=`<p class="eyebrow">${esc([label,current.unit].filter(Boolean).join(' · '))}</p><h1>${esc(greeting(current.name,label))}</h1><p class="muted">${summary}</p>
+  <div class="ops-actions">${actions}</div>
   <div class="ops-metrics"><div class="card"><span>${supplier?'Awaiting response':'Waiting requests'}</span><strong>${waiting.length}</strong></div><div class="card"><span>${supplier?'Visible enquiries':'Visible requests'}</span><strong>${rows.length}</strong></div><div class="card"><span>${supplier?'Responded':'Awaiting priority review'}</span><strong>${rows.filter(r=>supplier?r.status==='responded':r.status==='queued'&&!r.reviewed).length}</strong></div></div>
-  <div class="card"><h2>Your next action</h2><p>${supplier?'Open assigned enquiries to confirm available quantity and an estimated delivery date.': coordinator?'Open Requests to review priority and allocate. Open Supply enquiries to send another staff member’s shortage request to a supplier.':'Request equipment from another unit or create a shortage enquiry. A coordinator must review it before allocation or supplier contact.'}</p><a class="ops-link" href="#/${supplier?'supplies':'inventory'}">${supplier?'Review supply enquiries':'Find equipment'} →</a> ${supplier?'':'<a class="ops-link" href="#/requests">Track requests →</a>'}</div>
-  <div class="card"><h2>How the workflow works</h2><p>Request → Independent review → Allocation → Transfer coordination</p><p class="muted">Availability is checked on refresh. Supplier responses are estimates, not received stock. This prototype uses synthetic data.</p></div>`;
+  ${todayCard()}`;
  } catch(e) { if(workspace===current) el.innerHTML=`<h1>Operations overview</h1><p role="alert">${esc(e.message)}</p><a href="#/inventory">Open inventory</a>`; }
 }
 let supplyTimer;
