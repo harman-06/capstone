@@ -72,11 +72,14 @@ function renderTabBar(current, allowed) {
 // Rebuilds #sidebar for the current route and role. Called from main.js after every navigation. 
 // `current` is the active path, used to mark the matching link as .active / aria-current.
 export function renderNav(current) {
-  if(workspace?.roles.includes('admin')) { document.getElementById('sidebar').innerHTML='<span class="nav-caption">IT ADMINISTRATION</span><a href="#/accounts" class="active">Account monitoring</a>'; renderTabBar('/accounts',[{label:'Accounts',route:'/accounts',icon:icons[7]}]); return; }
-  const allowed = NAV.filter(n => ['/dashboard','/inventory','/units','/requests'].includes(n.route) && (workspace?.kind !== 'supplier' || n.route === '/dashboard') && (!n.cap || can(n.cap) !== 'deny'));
-  allowed.push({label:'Supply enquiries',route:'/supplies',icon:icons[6]});
+  if(workspace?.roles.includes('admin')) { document.getElementById('sidebar').innerHTML=`<span class="nav-caption">IT ADMINISTRATION</span><a href="#/accounts" class="${current.startsWith('/accounts') ? 'active' : ''}" title="Account monitoring">${svg(icons[7])}<span class="nav-label">Account monitoring</span></a>`; renderTabBar('/accounts',[{label:'Accounts',route:'/accounts',icon:icons[7]}]); return; }
+  // Pages that exist in the file but are not part of the product navigation.
+  const HIDDEN = ['/users', '/help'];
+  const allowed = NAV.filter(n => !HIDDEN.includes(n.route) && (workspace?.kind !== 'supplier' || n.route === '/dashboard') && (!n.cap || can(n.cap) !== 'deny'));
+  if (workspace?.kind !== 'patient') allowed.push({label:'Supply enquiries',route:'/supplies',icon:icons[6]});
+  // Each link keeps its text in .nav-label so the collapsed sidebar can show icons only.
   document.getElementById('sidebar').innerHTML = '<span class="nav-caption">WORKSPACE</span>' + allowed
-    .map(n => `<a href="#${n.route}" class="${current.startsWith(n.route) ? 'active' : ''}" ${current.startsWith(n.route) ? 'aria-current="page"' : ''}>${svg(n.icon)}${n.label}</a>`)
-    .join('') + '<span class="nav-footer">Nexora Health<br>Capstone demonstration</span>';
+    .map(n => `<a href="#${n.route}" class="${current.startsWith(n.route) ? 'active' : ''}" title="${n.label}" ${current.startsWith(n.route) ? 'aria-current="page"' : ''}>${svg(n.icon)}<span class="nav-label">${n.label}</span></a>`)
+    .join('') + '<span class="nav-footer">Nexora Health</span>';
   renderTabBar(current, allowed);   // ADDED (Harman): keep the mobile tab bar in sync with the sidebar
 }
