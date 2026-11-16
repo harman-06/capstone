@@ -1,6 +1,6 @@
 // STEP 2: roles and permissions. New role = one new entry below.
 // where each role is defined
-const CLINICAL = ['appointments.view','patients.view','inventory.view','inventory.update','requests.view'];
+const CLINICAL = ['appointments.view','patients.view','inventory.view','inventory.update','requests.view','notes.add'];
 const STAFF_DASH = ['greeting','schedule','notifications','patients'];
 
 export const ROLES = {
@@ -33,7 +33,8 @@ export const ROLES = {
 };
 // scope: all | unit | self | none  (resident, student, aide: add entries the same way)
 
-export const session = { role:'doctor', unit:'Cardiology' };
+// patientId is set for patient accounts (from the account's workspace); other roles leave it null.
+export const session = { role:'doctor', unit:'Cardiology', patientId:null };
 
 // Returns 'allow' | 'approval' | 'mask' | 'deny'
 export function can(cap) {
@@ -44,8 +45,11 @@ export function can(cap) {
   return 'deny';
 }
 
+// Asks the interface to show the approval dialog (see topbar.js). Kept as an event so
+// this file does not depend on any page or popup code.
 export function requestApproval(cap) {
-  alert(`"${cap}" needs a doctor's approval. (Stub: the authorization popup goes here.)`);
+  if (typeof document === 'undefined' || typeof CustomEvent === 'undefined') return;
+  document.dispatchEvent(new CustomEvent('nexora:approval-needed', { detail: { cap } }));
 }
 
 // Runs on every rendered page. Elements declare what they need: <button data-cap="transfers.request">
