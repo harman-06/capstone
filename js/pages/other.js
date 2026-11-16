@@ -5,55 +5,78 @@ import { reloadEquipment } from '../data.js';
 import { ROLES, session, applyPermissions } from '../roles.js';
 import { getPatients, getPatient, getAppointments, getInventory, addPatientNote, addAppointment, addRequestLogEntry, getRequestLog, myUnit, canDecideTransfer, acceptTransfer, rejectTransfer, getRequestsForMe, getQcItems, qualityCheckState, recordQualityCheck, QC_WINDOW_HOURS } from '../data.js';
 import { openModal } from '../modal.js';
+import { updatePatientProfile, addEvent } from '../data.js';
+import { can } from '../roles.js';
+import { toast } from '../toast.js';
 const page = (title, body) => `<h1>${title}</h1>${body}`;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const soon = title => el => { el.innerHTML = page(title, '<p class="muted">Coming in a later sprint.</p>'); };
 
-// Shared "Book a new appointment" modal — used from both the Patient
-// Profile page and the Appointments page. If patientId is given, the
-// patient field is preset and hidden; otherwise staff pick from the list.
+// Shared "Book a new appointment" modal, used on the Appointments page and on a patient's profile.
+// Patients book for themselves; staff pick from the patients they can see.
 function openBookAppointmentModal(onBooked, patientId) {
   const patients = getPatients();
-  const preset = patientId ? patients.find(p => p.id === patientId) : null;
+  const preset = patientId ? patients.find(p => p.id === patientId) : patients.length === 1 ? patients[0] : null;
+  const now = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   openModal({
-    title: 'Book a new appointment',
+    title: 'Book an appointment',
     submitLabel: 'Book appointment',
     bodyHtml: `
       ${preset ? `<p>Patient: <b>${escapeHtml(preset.name)}</b></p>`
-        : `<label>Patient <select name="patient">${patients.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('')}</select></label>`}
-      <label>Type <input name="type" placeholder="e.g. Follow-up, Consult" required></label>
-      <label>Date and time <input name="when" type="datetime-local" required></label>`,
+        : `<label>Patient <select name="patient">${patients.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join('')}</select></label>`}
+      <label>Appointment type <input name="type" placeholder="e.g. Follow-up, Consultation" required></label>
+      <label>Date and time <input name="when" type="datetime-local" min="${now}" required></label>`,
     onSubmit(form) {
       const patient = preset ?? patients.find(p => p.id === form.patient.value);
-      const when = new Date(form.when.value);
-      if (!patient || Number.isNaN(when.getTime())) { alert('Enter a valid date and time.'); return false; }
-      addAppointment({
-        patientId: patient.id, patientName: patient.name, unit: patient.unit,
-        type: form.type.value.trim() || 'Appointment',
-        when: when.toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
-      });
+      const date = new Date(form.when.value);
+      if (!patient || Number.isNaN(date.getTime())) { toast('Enter a valid date and time.', { error: true }); return false; }
+      if (date < new Date()) { toast('Choose a date and time in the future.', { error: true }); return false; }
+      const type = form.type.value.trim() || 'Appointment';
+      const when = date.toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      addAppointment({ patientId: patient.id, patientName: patient.name, unit: patient.unit, type, when });
+      if (ROLES[session.role].scope === 'self') addEvent({ audience: 'staff', severity: 'info', text: `${patient.name} booked an appointment`, detail: `${type} · ${when}`, target: `#/patients/${patient.id}` });
+      else addEvent({ audience: `patient:${patient.id}`, severity: 'info', text: `Appointment booked: ${type}`, detail: when, target: '#/appointments' });
+      toast('Appointment booked.');
       onBooked?.();
     },
   });
 }
 
 export function appointments(el, { query }) {
-  const rows = getAppointments(query.patient).map(a => `<div class="row"><b>${a.when}</b><span>${a.patientName} · ${a.type}</span></div>`).join('');
-  // ADDED (Harman): "Book a new appointment" button, same modal used on the Patient Profile page.
+  const rows = getAppointments(query.patient).map(a => `<div class="row"><b>${escapeHtml(a.when)}</b><span>${escapeHtml(a.patientName)} · ${escapeHtml(a.type)}</span></div>`).join('');
   el.innerHTML = page('Appointments', `
-    ${query.patient ? '<p class="muted">Filtered by patient. <a href="#/appointments">Clear filter</a></p>' : ''}
-    <p><button id="book-appt-btn" type="button" data-cap="appointments.view">Book a new appointment</button></p>
-    <div class="card">${rows || '<p class="muted">No appointments.</p>'}</div>`);
-  el.querySelector('#book-appt-btn').addEventListener('click', () => openBookAppointmentModal(() => appointments(el, { query })));
+    ${query.patient ? '<p class="muted">Showing one patient. <a href="#/appointments">Show all</a></p>' : ''}
+    <p><button id="book-appt-btn" type="button" data-cap="appointments.view">Book an appointment</button></p>
+    <div class="card">${rows || '<p class="muted">No appointments scheduled.</p>'}</div>`);
+  el.querySelector('#book-appt-btn')?.addEventListener('click', () => openBookAppointmentModal(() => appointments(el, { query })));
 }
 
 export function patients(el, { query }) {
   const all = getPatients(), unit = query.unit || '';
-  const units = [...new Set(all.map(p => p.unit))];
+  const units = [...new Set(all.map(p => p.unit))].sort();
   const locked = ROLES[session.role].scope !== 'all' ? 'disabled' : '';
-  const rows = all.filter(p => !unit || p.unit === unit).map(p => `<a class="row" href="#/patients/${p.id}">${p.name}<span class="muted">${p.unit}</span></a>`).join('');
-  el.innerHTML = page('Patients', `<p><label>Department <select id="unit-filter" ${locked}><option value="">All</option>${units.map(u => `<option ${u === unit ? 'selected' : ''}>${u}</option>`).join('')}</select></label></p><div class="card">${rows}</div>`);
-  el.querySelector('#unit-filter').onchange = e => { location.hash = '#/patients' + (e.target.value ? '?unit=' + e.target.value : ''); };
+  const nextOf = id => getAppointments(id)[0]?.when ?? 'None scheduled';
+  const rows = all.filter(p => !unit || p.unit === unit).map(p => `<tr data-search="${escapeHtml(`${p.name} ${p.medicalId ?? ''}`.toLowerCase())}">
+    <td><a href="#/patients/${escapeHtml(p.id)}">${escapeHtml(p.name)}</a></td>
+    <td data-cap="patients.viewSensitive">${escapeHtml(p.medicalId ?? '—')}</td>
+    <td>${escapeHtml(p.unit)}</td><td>${escapeHtml(nextOf(p.id))}</td></tr>`).join('');
+  el.innerHTML = page('Patients', `
+    <div class="inventory-tools">
+      <label>Search patients<input id="patient-search" type="search" placeholder="Name or medical ID" autocomplete="off"></label>
+      <label>Department<select id="unit-filter" ${locked}><option value="">All departments</option>${units.map(u => `<option ${u === unit ? 'selected' : ''}>${escapeHtml(u)}</option>`).join('')}</select></label>
+      <span class="muted" id="patient-count" role="status"></span>
+    </div>
+    <div class="card"><table><thead><tr><th scope="col">Patient</th><th scope="col">Medical ID</th><th scope="col">Department</th><th scope="col">Next appointment</th></tr></thead><tbody>${rows || '<tr><td colspan="4" class="muted">No patients to show.</td></tr>'}</tbody></table></div>`);
+  const search = el.querySelector('#patient-search');
+  const count = el.querySelector('#patient-count');
+  const filter = () => {
+    const q = search.value.trim().toLowerCase();
+    let shown = 0;
+    el.querySelectorAll('tbody tr[data-search]').forEach(tr => { const match = !q || tr.dataset.search.includes(q); tr.hidden = !match; if (match) shown++; });
+    count.textContent = `${shown} of ${all.filter(p => !unit || p.unit === unit).length} patients`;
+  };
+  search.addEventListener('input', filter);
+  filter();
+  el.querySelector('#unit-filter').onchange = e => { location.hash = '#/patients' + (e.target.value ? '?unit=' + encodeURIComponent(e.target.value) : ''); };
 }
 
 // Formats a yyyy-mm-dd dob into "54 yrs (Mar 14, 1972)"; falls back to the
@@ -77,62 +100,66 @@ function nextAppointmentPreview(p) {
 
 export function patientProfile(el, { params }) {
   const p = getPatient(params[0]);
-  if (!p) return void (el.innerHTML = page('Patient not found', '<p class="muted">This patient doesn\'t exist or you don\'t have access.</p>'));
+  if (!p) return void (el.innerHTML = page('Patient not found', '<p class="muted">This patient does not exist or you do not have access to the record. <a href="#/dashboard">Return to the dashboard</a>.</p>'));
+  const own = ROLES[session.role].scope === 'self';
+  const ec = p.emergencyContact;
+  const updated = p.profileUpdatedAt ? `Updated by the patient on ${new Date(p.profileUpdatedAt).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : '';
 
-  // CHANGED (Harman): banners side by side; appointments card moved up with
-  // a next-appointment preview; the remaining four cards shrunk into a 2x2
-  // grid (medication schedule + providers, documents/requisitions + notes).
-  el.innerHTML = page(p.name, `
+  // Sensitive values are masked one by one (data-cap on the value), so the rest of the
+  // record, including notes and booking, stays usable for roles that cannot see them.
+  el.innerHTML = page(escapeHtml(p.name), `
     <div class="patient-profile">
 
       <div class="patient-banners">
-        <div class="banner" data-cap="patients.viewSensitive">Diagnoses: ${p.diagnoses.join(', ') || 'None recorded'}</div>
-        <div class="banner">Medications: ${p.meds.map(m => `<a data-cap="inventory.view" data-fallback="text" href="#/inventory?tab=medicine&item=${m.itemId}">${m.name}</a>`).join(', ') || 'None'}</div>
-        <div class="banner">Allergies: ${p.allergies.join(', ') || 'None recorded'}</div>
+        <div class="banner">Diagnoses: <span data-cap="patients.viewSensitive">${escapeHtml(p.diagnoses.join(', ') || 'None recorded')}</span></div>
+        <div class="banner">Medications: ${p.meds.map(m => `<a data-cap="inventory.view" data-fallback="text" href="#/inventory?tab=medicine&item=${encodeURIComponent(m.itemId)}">${escapeHtml(m.name)}</a>`).join(', ') || 'None'}</div>
+        <div class="banner">Allergies: ${escapeHtml(p.allergies.join(', ') || 'None recorded')}</div>
       </div>
 
-      <div class="card" data-cap="patients.viewSensitive">
-        <h3>Patient details</h3>
+      <div class="card">
+        <div class="card-head"><h3>Patient details</h3>${own ? '<button type="button" id="edit-profile-btn">Edit profile</button>' : ''}</div>
         <dl class="item-facts">
-          <div><dt>Medical ID</dt><dd>${escapeHtml(p.medicalId) || '—'}</dd></div>
-          <div><dt>Date of birth / age</dt><dd>${ageLine(p)}</dd></div>
+          <div><dt>Medical ID</dt><dd data-cap="patients.viewSensitive">${escapeHtml(p.medicalId) || '—'}</dd></div>
+          <div><dt>Date of birth / age</dt><dd data-cap="patients.viewSensitive">${escapeHtml(ageLine(p))}</dd></div>
           <div><dt>Height</dt><dd>${p.heightCm ? p.heightCm + ' cm' : '—'}</dd></div>
           <div><dt>Weight</dt><dd>${p.weightKg ? p.weightKg + ' kg' : '—'}</dd></div>
-          <div><dt>Phone</dt><dd>${escapeHtml(p.contact?.phone) || '—'}</dd></div>
-          <div><dt>Email</dt><dd>${escapeHtml(p.contact?.email) || '—'}</dd></div>
-          <div><dt>Address</dt><dd>${escapeHtml(p.contact?.address) || '—'}</dd></div>
+          <div><dt>Phone</dt><dd data-cap="patients.viewSensitive">${escapeHtml(p.contact?.phone) || '—'}</dd></div>
+          <div><dt>Email</dt><dd data-cap="patients.viewSensitive">${escapeHtml(p.contact?.email) || '—'}</dd></div>
+          <div><dt>Address</dt><dd data-cap="patients.viewSensitive">${escapeHtml(p.contact?.address) || '—'}</dd></div>
+          <div><dt>Emergency contact</dt><dd data-cap="patients.viewSensitive">${ec ? escapeHtml([ec.name, ec.relationship, ec.phone].filter(Boolean).join(' · ')) : '—'}</dd></div>
         </dl>
+        ${updated ? `<p class="muted">${escapeHtml(updated)}</p>` : ''}
       </div>
 
       <div class="card">
         <h3>Upcoming appointments</h3>
         ${nextAppointmentPreview(p)}
-        <p><a href="#/appointments?patient=${p.id}">Expand</a> · <button id="book-appt-btn" type="button" data-cap="appointments.view">Book a new appointment</button></p>
+        <p><a href="#/appointments?patient=${encodeURIComponent(p.id)}">View all</a> · <button id="book-appt-btn" type="button" data-cap="appointments.view">Book an appointment</button></p>
       </div>
 
       <div class="patient-squares">
-        <div class="card" data-cap="patients.viewSensitive">
+        <div class="card">
           <h3>Medication schedule</h3>
           ${(p.medicationSchedule ?? []).map(s => `<div class="row"><b>${escapeHtml(s.time)}</b><span>${escapeHtml(s.med)} — ${escapeHtml(s.route)}</span></div>`).join('') || '<p class="muted">Nothing scheduled.</p>'}
         </div>
 
-        <div class="card" data-cap="patients.viewSensitive">
+        <div class="card">
           <h3>Primary providers</h3>
           ${(p.providers ?? []).map(pr => `<div class="row"><b>${escapeHtml(pr.name)}</b><span>${escapeHtml(pr.role)} · ${escapeHtml(pr.org)}</span></div>`).join('') || '<p class="muted">None recorded.</p>'}
         </div>
 
-        <div class="card" data-cap="patients.viewSensitive">
+        <div class="card">
           <h3>Documents &amp; requisitions</h3>
           ${(p.documents ?? []).map(d => `<div class="row"><span>${escapeHtml(d.name)}</span><span class="muted">${escapeHtml(d.date)}</span></div>`).join('')}
           ${(p.requisitions ?? []).map(r => `<div class="row"><span>${escapeHtml(r.name)}</span><span class="muted">${escapeHtml(r.status)} · ${escapeHtml(r.date)}</span></div>`).join('')}
           ${!(p.documents?.length || p.requisitions?.length) ? '<p class="muted">Nothing on file.</p>' : ''}
         </div>
 
-        <div class="card" data-cap="patients.viewSensitive">
+        <div class="card">
           <h3>Notes</h3>
           <div id="patient-notes">${renderNotes(p)}</div>
-          <form id="add-note-form">
-            <label>Add a note <textarea name="text" rows="2" required placeholder="Visible to all staff who can view this patient"></textarea></label>
+          <form id="add-note-form" data-cap="notes.add">
+            <label>Add a note <textarea name="text" rows="2" required placeholder="Visible to staff who can view this patient"></textarea></label>
             <button type="submit">Add note</button>
           </form>
         </div>
@@ -141,17 +168,47 @@ export function patientProfile(el, { params }) {
     </div>`);
 
   el.querySelector('#book-appt-btn')?.addEventListener('click', () => openBookAppointmentModal(() => patientProfile(el, { params }), p.id));
+  el.querySelector('#edit-profile-btn')?.addEventListener('click', () => openEditProfile(p, () => { patientProfile(el, { params }); applyPermissions(el); }));
 
   const noteForm = el.querySelector('#add-note-form');
   noteForm?.addEventListener('submit', e => {
     e.preventDefault();
     const text = noteForm.text.value.trim();
-    if (!text) return;
+    if (!text || can('notes.add') !== 'allow') return;
     const actor = ROLES[session.role];
     const when = new Date().toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
     addPatientNote(p.id, { author: actor.user, role: actor.label, date: when, text });
     noteForm.reset();
     el.querySelector('#patient-notes').innerHTML = renderNotes(p);
+    toast('Note added.');
+  });
+}
+
+// Patients edit their own contact details, measurements, allergies and emergency contact.
+// Medical ID and date of birth are shown but cannot be changed here.
+function openEditProfile(p, onSaved) {
+  const field = (name, label, value, attrs = '') => `<label>${label}<input name="${name}" value="${escapeHtml(value ?? '')}" ${attrs}></label>`;
+  const ec = p.emergencyContact ?? {};
+  openModal({
+    title: 'Edit profile',
+    submitLabel: 'Save changes',
+    bodyHtml: `
+      ${field('phone', 'Phone', p.contact?.phone, 'type="tel" autocomplete="tel"')}
+      ${field('email', 'Email', p.contact?.email, 'type="email" autocomplete="email"')}
+      ${field('address', 'Address', p.contact?.address, 'autocomplete="street-address"')}
+      ${field('heightCm', 'Height (cm)', p.heightCm, 'type="number" step="any" min="50" max="260"')}
+      ${field('weightKg', 'Weight (kg)', p.weightKg, 'type="number" step="any" min="2" max="400"')}
+      ${field('allergies', 'Allergies (separate with commas)', (p.allergies ?? []).join(', '))}
+      ${field('emergencyName', 'Emergency contact name', ec.name)}
+      ${field('emergencyRelationship', 'Relationship', ec.relationship)}
+      ${field('emergencyPhone', 'Emergency contact phone', ec.phone, 'type="tel"')}
+      <p class="muted">To correct your date of birth or medical ID, contact hospital registration.</p>`,
+    onSubmit(form) {
+      const result = updatePatientProfile(p.id, Object.fromEntries(new FormData(form)));
+      if (!result.ok) { toast(Object.values(result.errors)[0], { error: true }); return false; }
+      toast('Profile updated.');
+      onSaved();
+    },
   });
 }
 
@@ -192,7 +249,7 @@ export function inventory(el, { query }) {
     <table><thead><tr><th scope="col">BGM</th><th scope="col">Unit</th><th scope="col">Quality check</th><th scope="col">Last checked by</th><th scope="col">Action</th></tr></thead><tbody>${qcRows}</tbody></table>
   </div>` : '';
   el.innerHTML = page('Inventory', `<div class="tabs"><a class="${tab === 'equipment' ? 'on' : ''}" href="#/inventory?tab=equipment">Equipment</a><a class="${tab === 'medicine' ? 'on' : ''}" href="#/inventory?tab=medicine">Medicine</a></div>
-    <p class="muted">Find items and check stock across units. Medicine is sample data.</p>
+    <p class="muted">Find items and check stock across units.</p>
     <div class="inventory-tools"><label>Search items<input id="inventory-search" type="search" placeholder="Search by item name"></label><label>Unit<select id="inventory-unit"><option value="">All units</option>${units.map(u => `<option value="${escapeHtml(u)}">${escapeHtml(u)}</option>`).join('')}</select></label><span id="inventory-count" class="muted" role="status"></span></div>
     <div class="card"><table><thead><tr><th scope="col">Item</th><th scope="col">Unit</th><th scope="col">Quantity</th><th scope="col">Availability</th><th scope="col">Action</th></tr></thead><tbody>${rows}</tbody></table><p id="inventory-empty" class="empty-state" hidden>No items match your filters.</p></div>${qcCard}`);
   const search = el.querySelector('#inventory-search');
@@ -230,7 +287,7 @@ export function inventory(el, { query }) {
         try {
           await requestEquipment(item.id);
           location.hash = '#/requests';
-        } catch (error) { alert(error.message); }
+        } catch (error) { toast(error.message, { error: true }); }
         finally { button.disabled = false; }
         return;
       }
@@ -295,20 +352,14 @@ export async function requests(el) {
         await reloadEquipment();
       } else {
         const result = approve ? acceptTransfer(button.dataset.accept) : rejectTransfer(button.dataset.reject);
-        if (!result.ok) alert(result.reason);
+        if (!result.ok) toast(result.reason, { error: true });
       }
       if (globalThis.location?.hash === renderedRoute) await requests(el);
-    } catch (error) { alert(error.message); }
+    } catch (error) { toast(error.message, { error: true }); }
     finally { button.disabled = false; }
   }
   el.querySelectorAll('[data-accept]').forEach(button => button.addEventListener('click', () => decide(button, true)));
   el.querySelectorAll('[data-reject]').forEach(button => button.addEventListener('click', () => decide(button, false)));
   applyPermissions(el);
 }
-export const users = soon('Users');
-export const notFound = soon('Page not found');
-export const help = el => { el.innerHTML = page('Help', `<div class="card"><ol>
-  <li>Use the sidebar to move between sections. You only see what your role can use.</li>
-  <li>The dashboard is your home page. Select any card to open the full page.</li>
-  <li>Search Inventory for equipment or medicine. Select Request to view the item's stock details. Live equipment requests enter the allocation queue for coordinator review.</li>
-  <li>A lock icon means the action needs approval from a doctor.</li></ol></div>`); };
+export const notFound = el => { el.innerHTML = page('Page not found', '<p class="muted">The page you asked for does not exist. <a href="#/dashboard">Return to the dashboard</a>.</p>'); };
