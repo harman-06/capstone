@@ -496,3 +496,12 @@ main .eyebrow { color:#075d62; font-size:12px; letter-spacing:.12em; margin:0 0 
 body.pref-compact td, body.pref-compact th { padding:8px 12px; }
 body.pref-compact .row { padding:6px 0; }
 body.pref-reduce-motion * { animation:none !important; transition:none !important; }
+
+/* Nexora Health logo sizing */
+.brand-logo {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    display: block;
+    flex-shrink: 0;
+}
