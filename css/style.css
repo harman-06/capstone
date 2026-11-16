@@ -401,7 +401,7 @@ body.signed-out .database-controls > form { width:44%; margin-left:auto; }
 body.signed-out .tabbar{ display:none !important; }
 
 /* Operational workspace: readable solid surfaces, consistent controls. */
-:root{--bg:#f3f6f9;--surface:#fff;--surface-solid:#fff;--ink:#172b3a;--muted:#586b79;--brand:#087e83;--tint:#e7f5f4;--line:#dce5eb;--r:12px;--blur:0px;--shadow-soft:0 2px 8px #16304408;--shadow-deep:0 12px 40px #16304424}
+/*:root{--bg:#f3f6f9;--surface:#fff;--surface-solid:#fff;--ink:#172b3a;--muted:#586b79;--brand:#087e83;--tint:#e7f5f4;--line:#dce5eb;--r:12px;--blur:0px;--shadow-soft:0 2px 8px #16304408;--shadow-deep:0 12px 40px #16304424} */
 body{background:var(--bg);color:var(--ink)}
 .topbar{background:#fff;border-bottom:1px solid var(--line);box-shadow:none;min-height:64px;box-sizing:border-box}
 .brand{text-shadow:none}.brand-mark{background:var(--brand);color:white}
