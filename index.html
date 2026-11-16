@@ -9,18 +9,42 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nexora Health</title>
-<link rel="stylesheet" href="css/style.css?v=20261101-operations">
+<link rel="stylesheet" href="css/style.css?v=20261112-shell">
 </head>
 <body class="signed-out">
-<!-- Defines the top bar with all of its elements: nav toggle, brand, live clock (main.js), demo role switcher, signed-in user name -->
+<!-- Top bar: menu toggle, brand, clock, notification bell, account menu (topbar.js) -->
 <header class="topbar" data-auth-required hidden>
-  <button id="menu-btn" aria-label="Toggle menu">☰</button>
+  <button id="menu-btn" aria-label="Toggle navigation" aria-controls="sidebar" aria-expanded="true">☰</button>
   <a class="brand" href="#/dashboard"><span class="brand-mark" aria-hidden="true">+</span> Nexora <span class="brand-light">Health</span></a>
   <span class="spacer"></span>
   <span id="clock"></span>
-  <label class="role-label">Preview role <select id="role-switcher"></select></label>
-  <span id="user-name" class="user-chip"></span>
+  <div class="menu-wrap">
+    <button id="bell-btn" class="icon-btn" type="button" aria-label="Notifications" aria-expanded="false" aria-controls="bell-menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>
+      <span id="bell-count" class="bell-count" hidden></span>
+    </button>
+    <div id="bell-menu" class="menu bell-menu" hidden>
+      <div class="menu-title">Notifications</div>
+      <div id="bell-list" class="bell-list"></div>
+    </div>
+  </div>
+  <div class="menu-wrap">
+    <button id="account-btn" class="account-btn" type="button" aria-expanded="false" aria-controls="account-menu">
+      <span id="account-avatar" class="avatar" aria-hidden="true"></span>
+      <span class="account-text"><span id="user-name"></span><span id="user-role"></span></span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div id="account-menu" class="menu account-menu" hidden>
+      <div class="menu-head"><strong id="menu-name"></strong><span id="menu-role"></span></div>
+      <a href="#/account">View account</a>
+      <a href="#/settings">Settings</a>
+      <hr>
+      <button id="menu-refresh" type="button">Refresh equipment</button>
+      <button id="menu-signout" type="button">Sign out</button>
+    </div>
+  </div>
 </header>
+<div id="toast" role="status" aria-live="polite"></div>
   <!-- Sign-in screen (auth-ui.js). Shown instead of the app until the user signs in. -->
 <section id="database-controls" class="database-controls" aria-label="Database connection">
   <div class="signin-brand"><span class="brand-mark" aria-hidden="true">+</span><span>Nexora <b>Health</b></span><small>EQUIPMENT OPERATIONS</small></div>
