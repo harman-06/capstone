@@ -499,7 +499,7 @@ body.pref-reduce-motion * { animation:none !important; transition:none !importan
 
 /* Nexora Health logo sizing */
 .brand-logo {
-    width: 100px;
+    width: 160px;
     height: auto;
     object-fit: contain;
     display: block;
