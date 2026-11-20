@@ -28,8 +28,11 @@ export async function loadData() {
 // Loads equipment inventory + units. Falls back to demo JSON if Supabase
 // isn't configured (config.js empty). Live errors fail closed; otherwise
 // merges live equipment rows with the still-synthetic medicine rows.
+let equipmentLoad = 0;
 export async function reloadEquipment() {
+  const load = ++equipmentLoad;
   const demoInventory = await json('inventory');
+  if (load !== equipmentLoad) return;
   if (!isConfigured()) {
     db.inventory = demoInventory;
     db.units = await json('units');
@@ -42,12 +45,16 @@ export async function reloadEquipment() {
   db.units = [];
   try {
     const [inventory, units] = await Promise.all([fetchInventory(), fetchUnits()]);
+    if (load !== equipmentLoad) return;
     if (!units.length) throw new Error('No units returned. Your account may not be provisioned, or demo data is missing.');
     db.inventory = [...inventory, ...db.inventory];
     db.units = units;
     source = 'Live Supabase equipment · medicine/patients remain demo data';
+    return true;
   } catch (error) {
+    if (load !== equipmentLoad) return;
     source = `Database equipment unavailable: ${error.message}`;
+    return false;
   }
 }
 // Filters a list down to what the current role's scope allows (all/unit/self/none — see roles.js).
@@ -377,6 +384,7 @@ export function updatePatientProfile(patientId, input) {
 
 // Protected browser state must not survive sign-out, expiry or account changes.
 onAuthChange(() => {
+  equipmentLoad++;
   db.inventory = (db.inventory ?? []).filter(i => i.type !== 'equipment');
   db.units = [];
   requestLog.length = 0;

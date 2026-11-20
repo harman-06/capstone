@@ -21,9 +21,13 @@ try {
   } catch(e){await c.query('ROLLBACK');throw e;}finally{c.release();}
  }
  const opA=crypto.randomUUID();
- const repeated=await Promise.all(Array.from({length:8},()=>as(subjects.a,'SELECT nh_api_enqueue_equipment($1,$2,$3)',[ctx.source,opA,'Concurrent request'])));
+ const due = new Date(Date.now() + 3600000).toISOString();
+ const repeated=await Promise.all(Array.from({length:8},()=>as(subjects.a,'SELECT nh_api_submit_equipment_need($1,$2,$3,$4)',[ctx.source,opA,'Concurrent request',due])));
  assert.equal(new Set(repeated).size,1,'Concurrent retry created duplicate demands');
  const a=repeated[0];
+ const conflicts=await Promise.allSettled(Array.from({length:4},()=>as(subjects.a,
+  'SELECT nh_api_submit_equipment_need($1,$2,$3,$4)',[ctx.source,crypto.randomUUID(),'Conflicting demand',due])));
+ assert.ok(conflicts.every(result=>result.status==='rejected' && result.reason.code==='23505'));
  const b=await as(subjects.b,'SELECT nh_api_enqueue_equipment($1,$2,$3)',[ctx.source,crypto.randomUUID(),'Other unit']);
  await as(subjects.coordinator,'SELECT nh_api_review_allocation($1,1,NULL,$2)',[a,'Routine reviewed independently']);
  await as(subjects.coordinator,'SELECT nh_api_review_allocation($1,1,NULL,$2)',[b,'Routine reviewed independently']);
@@ -41,5 +45,22 @@ try {
  assert.equal(race.filter(x=>x.outcome==='allocated').length,1,'Last asset allocated more than once');
  assert.equal((await pool.query('SELECT count(*)::int AS n FROM asset_reservations WHERE released_at IS NULL')).rows[0].n,2);
  assert.equal((await pool.query("SELECT count(*)::int AS n FROM nh_allocation_events WHERE action='allocated'")).rows[0].n,2);
- console.log('PASS real PostgreSQL concurrent enqueue, replay, reserve-floor and last-asset allocation (independent sessions)');
+ const transfer = same[0].transfer_id;
+ const receiver = subjects.outsider;
+ await pool.query(`
+  INSERT INTO users(email,display_name,home_department_id,auth_subject)
+  SELECT 'concurrent-receiver@example.test','receiver',t.to_department_id,$2
+  FROM transfer_requests t WHERE t.transfer_id=$1`,[transfer,receiver]);
+ await pool.query(`
+  INSERT INTO user_role_assignments(user_id,role_id,scope_location_id)
+  SELECT u.user_id,r.role_id,u.home_department_id FROM users u,roles r
+  WHERE u.auth_subject=$1 AND r.role_key='chargeNurse'`,[receiver]);
+ const allMove = (subject, action) => Promise.all(Array.from({length:6},()=>as(subject,
+  'SELECT nh_api_move_transfer($1,$2)',[transfer,action])));
+ assert.ok((await allMove(subjects.coordinator,'dispatch')).every(status=>status==='in_transit'));
+ assert.ok((await allMove(receiver,'receive')).every(status=>status==='completed'));
+ const events=await pool.query("SELECT event_type FROM transfer_events WHERE transfer_id=$1 ORDER BY event_id",[transfer]);
+ assert.deepEqual(events.rows.map(row=>row.event_type),
+  ['requested','approved','reserved','dispatched','in_transit','received','completed']);
+ console.log('PASS real PostgreSQL concurrent request conflicts, replay, reserve floor, allocation, dispatch and receipt');
 } finally {await pool.end();}

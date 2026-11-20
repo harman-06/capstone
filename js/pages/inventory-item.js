@@ -1,4 +1,4 @@
-import { isConfigured, requestEquipment } from '../api.js';
+import { isConfigured } from '../api.js';
 //
 // Shows an item's description, quantity on hand, and unit location, and lets
 // a qualified role select a quantity + patient and administer it:
@@ -20,6 +20,7 @@ import { isConfigured, requestEquipment } from '../api.js';
 // request log entry (sourceItemId, sourceUnit).
 import { ROLES, session, can, requestApproval } from '../roles.js';
 import { getInventoryItem, getInventory, getUnits, getPatients, adjustInventoryQty, addPatientNote, addRequestLogEntry } from '../data.js';
+import { openEquipmentNeed } from './equipment-need.js';
 import { openModal } from '../modal.js';
 import { toast } from '../toast.js';
 
@@ -48,7 +49,7 @@ function renderOtherUnits(item) {
 
 // Other units that can actually supply the item (stock above 0, not 'out').
 const getUnitOptions = item =>
-  getInventory().filter(i => i.name === item.name && i.id !== item.id && (isConfigured() || (i.qty > 0 && i.status !== 'out')));
+  getInventory().filter(i => i.name === item.name && i.id !== item.id && i.qty > 0 && i.status !== 'out');
 
 export function inventoryItem(el, { params }) {
   const item = getInventoryItem(params[0]);
@@ -112,6 +113,7 @@ function logActivity(el, activity, entry) {
 // Sprint 2: the user picks which unit to take the item from. Stock is not
 // changed here; the request stays 'pending' until an approver decides.
 function openTransferModal(item, el, activity) {
+  if (isConfigured()) return openEquipmentNeed(item, el, el.querySelector('#request-btn'));
   const sources = getUnitOptions(item);
   if (!sources.length) { toast(`${item.name} is not available in any other unit right now.`, { error: true }); return; }
   openModal({
@@ -123,20 +125,13 @@ function openTransferModal(item, el, activity) {
           ${sources.map(s => `<option value="${escapeHtml(s.id)}">${unitLabel(s)}: ${s.qty} available</option>`).join('')}
         </select>
       </label>
-      <label>Quantity <input name="quantity" type="number" min="1" ${isConfigured() ? 'max="1"' : ''} value="1" required></label>
-      ${isConfigured() ? '<p class="muted">One reusable asset per queued request; zero stock can wait for availability. The destination is your signed-in account’s assigned unit.</p>' : ''}`,
+      <label>Quantity <input name="quantity" type="number" min="1" value="1" required></label>
     async onSubmit(form) {
       const source = sources.find(s => String(s.id) === form.source.value);
       const quantity = Number(form.quantity.value);
-      if (!source || !quantity || quantity < 1 || (!isConfigured() && quantity > source.qty)) {
+      if (!source || !quantity || quantity < 1 || quantity > source.qty) {
         toast('Enter a quantity between 1 and the stock in the chosen unit.', { error: true });
         return false;
-      }
-      if (isConfigured()) {
-        if (quantity !== 1) { toast('Create one saved request per reusable asset.', { error: true }); return false; }
-        const id = await requestEquipment(source.id);
-        logActivity(el, activity, {summary: `Queued equipment request ${id}. Open Requests for review and allocation.`, status: 'queued'});
-        return;
       }
       const record = addRequestLogEntry({
         type: 'transfer', item: item.name, itemId: item.id,
