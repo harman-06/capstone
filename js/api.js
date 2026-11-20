@@ -96,6 +96,8 @@ const rpc = (name, body = {}) => databaseRequest(`rpc/${name}`, body);
 export const fetchInventory = () => rest('frontend_equipment_inventory_v?select=id,name,type,unit,qty,status&order=unit.asc,name.asc');
 export const fetchUnits = () => rest('frontend_units_v?select=id,number,name,floor&order=floor.asc,name.asc');
 export const fetchHospitalContext = () => rpc('nh_api_hospital_context');
+export const fetchEquipmentSources = categoryId => rpc('nh_api_equipment_sources', {p_category_id: categoryId});
+export const moveTransfer = (transferId, action) => rpc('nh_api_move_transfer', {p_transfer_id: transferId, p_action: action});
 export const fetchTransfers = () => rpc('nh_api_list_transfers');
 // Retain the operation key after an uncertain response; clear it only after confirmed success.
 async function idempotentRpc(name, key, body) {
@@ -109,6 +111,10 @@ async function idempotentRpc(name, key, body) {
 export const requestEquipment = (sourceInventoryId, reason = null) => idempotentRpc('nh_api_enqueue_equipment', JSON.stringify(['request',sourceInventoryId,reason]), {
   p_source_inventory_id: sourceInventoryId, p_reason: reason
 });
+export const submitEquipmentNeed = (sourceInventoryId, reason, neededBy) => idempotentRpc(
+  'nh_api_submit_equipment_need', JSON.stringify(['need',sourceInventoryId,reason,neededBy]), {
+    p_source_inventory_id: sourceInventoryId, p_reason: reason, p_needed_by: neededBy
+  });
 export const fetchAllocationQueue = () => rpc('nh_api_list_allocation_queue');
 export const reviewAllocation = (requestId, priority, neededBy, note) => rpc('nh_api_review_allocation', {
   p_request_id: requestId, p_priority: priority, p_needed_by: neededBy, p_note: note
