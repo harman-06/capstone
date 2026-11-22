@@ -16,6 +16,7 @@ import { startRouter } from './router.js';
 import { renderNav } from './nav.js';
 import { units } from './pages/units.js';
 import { inventoryItem } from './pages/inventory-item.js';
+import { readiness } from './pages/readiness.js';   // SPRINT 3: resource and care-readiness view
 import * as pg from './pages/other.js';
 
 // These are all the routes.
@@ -34,16 +35,17 @@ const routes = [
   [/^\/inventory$/, pg.inventory],
   [/^\/inventory\/([\w-]+)$/, inventoryItem],
   [/^\/units$/, units],
+  [/^\/readiness$/, readiness],   // SPRINT 3
   [/^\/requests$/, pg.requests],
   [/.*/, pg.notFound],
 ];
 
 // Which pages each kind of account may open. Anything else goes back to the dashboard.
-const STAFF_PATHS = ['/dashboard', '/appointments', '/patients', '/inventory', '/units', '/requests', '/supplies', '/account', '/settings'];
+const STAFF_PATHS = ['/dashboard', '/appointments', '/patients', '/inventory', '/units', '/readiness', '/requests', '/supplies', '/account', '/settings'];
 const PATIENT_PATHS = ['/dashboard', '/appointments', '/my-health', '/account', '/settings'];
 const SUPPLIER_PATHS = ['/dashboard', '/supplies', '/account', '/settings'];
 // A page also needs its capability from roles.js (can() returns 'deny' hides it).
-const ROUTE_CAPS = { '/appointments': 'appointments.view', '/patients': 'patients.view', '/my-health': 'profile.own', '/inventory': 'inventory.view', '/units': 'inventory.view', '/requests': 'requests.view' };
+const ROUTE_CAPS = { '/appointments': 'appointments.view', '/patients': 'patients.view', '/my-health': 'profile.own', '/inventory': 'inventory.view', '/units': 'inventory.view', '/readiness': 'inventory.view', '/requests': 'requests.view' };
 const SUBROUTES = ['/inventory', '/patients'];   // pages that have /<page>/<id> children
 
 function allowed(path) {
