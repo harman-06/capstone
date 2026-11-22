@@ -15,6 +15,7 @@ const NAV = [
   { label:'Requests',     route:'/requests',     cap:'requests.view' },
   { label:'Users',        route:'/users',        cap:'users.manage' },
   { label:'Help',         route:'/help' },
+  { label:'Readiness',    route:'/readiness',    cap:'inventory.view' },   // SPRINT 3: keep at the end so the icons below stay lined up
 ];
 // One SVG path per NAV item above, same order, so icons[i] matches NAV[i].
 const icons = [
@@ -26,7 +27,8 @@ const icons = [
   'M4 21V3h16v18 M8 7h2 M14 7h2 M8 11h2 M14 11h2 M10 21v-6h4v6',
   'M4 7h16 M16 3l4 4-4 4 M20 17H4 M8 13l-4 4 4 4',
   'M12 3a4 4 0 1 0 0 8a4 4 0 0 0 0-8 M4 21v-2a8 8 0 0 1 16 0v2',
-  'M12 22a10 10 0 1 0 0-20a10 10 0 0 0 0 20 M9 8a3 3 0 0 1 6 0c0 2-3 2-3 5 M12 17h.01'
+  'M12 22a10 10 0 1 0 0-20a10 10 0 0 0 0 20 M9 8a3 3 0 0 1 6 0c0 2-3 2-3 5 M12 17h.01',
+  'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z M9 12l2 2 4-4'
 ];
 NAV.forEach((item,i) => item.icon = icons[i]);
 
