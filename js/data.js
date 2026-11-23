@@ -7,6 +7,7 @@
 // So the data source can easily change without touching any page.
 import { ROLES, session, can } from './roles.js';
 import { isConfigured, fetchInventory, fetchUnits, onAuthChange } from './api.js';
+import { applyReadinessDemo, transferPreview, stockBreakdown } from './readiness.js';   // SPRINT 3
 const db = {};
 let source = 'Loading'; // human-readable string shown in the sign-in status area
 export const getDataSource = () => source;
@@ -45,6 +46,9 @@ export async function reloadEquipment() {
     if (!units.length) throw new Error('No units returned. Your account may not be provisioned, or demo data is missing.');
     db.inventory = [...inventory, ...db.inventory];
     db.units = units;
+    // SPRINT 3: demo in use / reserved / maintenance / in transit numbers, fitted inside the
+    // real quantities, until the database has those columns. Real quantities are never changed.
+    db.inventory = applyReadinessDemo(db.inventory);
     source = 'Live Supabase equipment · medicine/patients remain demo data';
   } catch (error) {
     source = `Database equipment unavailable: ${error.message}`;
@@ -185,7 +189,11 @@ export function canDecideTransfer(request) {
 
 // Accept: moves stock from the source unit's item to the requesting unit's
 // item, then marks the request approved. Returns { ok, reason?, request? }.
-export function acceptTransfer(id) {
+// SPRINT 3: the move respects in use / reserved / maintenance / in transit and the
+// source unit's reserve level, and records exact before/after numbers on the request.
+// If it would go below the reserve it returns { ok:false, needsReserveOverride:true };
+// call again with { allowReserve: true } once the clerk confirms.
+export function acceptTransfer(id, { allowReserve = false } = {}) {
   const r = requestLog.find(x => x.id === id);
   if (!r) return { ok: false, reason: 'Request not found.' };
   if (isConfigured()) return { ok: false, reason: 'Use the authenticated database decision action.' };
@@ -198,9 +206,12 @@ export function acceptTransfer(id) {
     ? db.inventory.find(i => i.id === r.itemId)
     : db.inventory.find(i => i.type === from?.type && i.name === r.item && i.unit === r.requestingUnit);
   if (!from || !to) return { ok: false, reason: 'Could not find the items for this request.' };
-  if (from.qty < r.quantity) return { ok: false, reason: `Only ${from.qty} left in ${from.unit}.` };
+  const preview = transferPreview(from, to, r.quantity, { allowReserve });
+  if (!preview.ok) return preview;
   adjustInventoryQty(from.id, -r.quantity);
   adjustInventoryQty(to.id, r.quantity);
+  for (const row of [from, to]) row.status = stockBreakdown(row).status;   // status follows availability, not just quantity
+  r.transfer = preview;                                                    // exact before/after for both units
   r.decidedBy = ROLES[session.role].user;
   r.decidedAt = new Date();
   updateRequestStatus(id, 'approved');
@@ -246,6 +257,8 @@ const EXTRA_EQUIPMENT = [
 ];
 
 // Appends the extra rows to the inventory (skips any id that already exists).
+// SPRINT 3: then overlays the realistic in use / reserved / maintenance / in transit
+// numbers and reserve levels. Demo mode only (this runs when the database is not configured).
 function addSprint2Equipment() {
   const now = Date.now();
   const rows = EXTRA_EQUIPMENT
@@ -254,7 +267,7 @@ function addSprint2Equipment() {
       ...row,
       ...(row.qcRequired ? { lastQualityCheck: checkedHoursAgo == null ? null : now - checkedHoursAgo * 3600000 } : {}),
     }));
-  db.inventory = [...db.inventory, ...rows];
+  db.inventory = applyReadinessDemo([...db.inventory, ...rows], { overrideQty: true });
 }
 
 // All items that need quality checks (the BGMs).

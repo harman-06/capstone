@@ -18,10 +18,15 @@ import { isConfigured, requestEquipment } from '../api.js';
 // other units hold the same item, and the equipment request modal lets the
 // user choose which unit to request from. The chosen unit is saved on the
 // request log entry (sourceItemId, sourceUnit).
+//
+// SPRINT 3 ADDITION (inventory intelligence): the other-units card and the
+// "Take from" list now use available stock (on hand minus in use, reserved,
+// maintenance and in transit) and show how much can be shared safely.
 import { ROLES, session, can, requestApproval } from '../roles.js';
 import { getInventoryItem, getInventory, getUnits, getPatients, adjustInventoryQty, addPatientNote, addRequestLogEntry } from '../data.js';
 import { openModal } from '../modal.js';
 import { toast } from '../toast.js';
+import { stockBreakdown } from '../readiness.js';
 
 const page = (title, body) => `<h1>${title}</h1>${body}`;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -36,19 +41,23 @@ const unitLabel = i => {
 };
 
 // Same equipment held by other units, matched by name.
+// SPRINT 3: shows what is actually available, not just what is on hand.
 function renderOtherUnits(item) {
   const others = getInventory().filter(i => i.name === item.name && i.id !== item.id);
   if (!others.length) return '<p class="muted">No other unit holds this item.</p>';
-  return others.map(i => `
+  return others.map(i => {
+    const b = stockBreakdown(i);
+    return `
     <div class="row">
-      <span>${unitLabel(i)}: ${i.qty} on hand</span>
-      <span class="badge ${i.status}">${escapeHtml(i.status)}</span>
-    </div>`).join('');
+      <span>${unitLabel(i)}: <b>${b.available}</b> available of ${b.onHand} on hand${b.reason ? ` <span class="muted">(${escapeHtml(b.reason)})</span>` : ''}</span>
+      <span class="badge ${b.status}">${escapeHtml(b.status)}</span>
+    </div>`;
+  }).join('');
 }
 
-// Other units that can actually supply the item (stock above 0, not 'out').
+// Other units that can actually supply the item (something available, not just on hand).
 const getUnitOptions = item =>
-  getInventory().filter(i => i.name === item.name && i.id !== item.id && (isConfigured() || (i.qty > 0 && i.status !== 'out')));
+  getInventory().filter(i => i.name === item.name && i.id !== item.id && (isConfigured() || stockBreakdown(i).available > 0));
 
 export function inventoryItem(el, { params }) {
   const item = getInventoryItem(params[0]);
@@ -120,7 +129,7 @@ function openTransferModal(item, el, activity) {
     bodyHtml: `
       <label>Take from
         <select name="source">
-          ${sources.map(s => `<option value="${escapeHtml(s.id)}">${unitLabel(s)}: ${s.qty} available</option>`).join('')}
+          ${sources.map(s => { const b = stockBreakdown(s); return `<option value="${escapeHtml(s.id)}">${unitLabel(s)}: ${b.available} available · ${b.transferable} can be shared safely</option>`; }).join('')}
         </select>
       </label>
       <label>Quantity <input name="quantity" type="number" min="1" ${isConfigured() ? 'max="1"' : ''} value="1" required></label>
@@ -128,8 +137,8 @@ function openTransferModal(item, el, activity) {
     async onSubmit(form) {
       const source = sources.find(s => String(s.id) === form.source.value);
       const quantity = Number(form.quantity.value);
-      if (!source || !quantity || quantity < 1 || (!isConfigured() && quantity > source.qty)) {
-        toast('Enter a quantity between 1 and the stock in the chosen unit.', { error: true });
+      if (!source || !quantity || quantity < 1 || (!isConfigured() && quantity > stockBreakdown(source).available)) {
+        toast('Enter a quantity between 1 and what is available in the chosen unit.', { error: true });
         return false;
       }
       if (isConfigured()) {
