@@ -7,6 +7,7 @@
 // (on hand, in use, reserved, maintenance, in transit, available now,
 // reserve level, can share) so availability is more than a quantity.
 import { getInventory, getQcItems, qualityCheckState } from '../data.js';
+import { isConfigured } from '../api.js';
 import { applyPermissions } from '../roles.js';
 import { stockBreakdown, unitReadiness, LEVEL_LABEL, LEVEL_BADGE } from '../readiness.js';
 
@@ -15,6 +16,7 @@ const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':
 
 export function readiness(el) {
   let unitFilter = '';
+  const live = isConfigured();
 
   const draw = () => {
     const equipment = getInventory().filter(i => i.type === 'equipment');
@@ -33,7 +35,7 @@ export function readiness(el) {
         <h3>${escapeHtml(unit)} <span class="badge ${LEVEL_BADGE[level]}">${LEVEL_LABEL[level]}</span></h3>
         ${issues.length
           ? issues.map(text => `<div class="row"><span>${escapeHtml(text)}</span></div>`).join('')
-          : '<p class="muted">All critical equipment is above its reserve level.</p>'}
+          : '<p class="muted">All tracked critical equipment is above its low-stock threshold.</p>'}
       </div>`;
     }).join('');
 
@@ -45,10 +47,9 @@ export function readiness(el) {
         return `<tr>
           <td><a href="#/inventory/${escapeHtml(i.id)}">${escapeHtml(i.name)}</a></td>
           <td>${escapeHtml(i.unit)}</td>
-          <td>${b.onHand}</td><td>${b.inUse}</td><td>${b.reserved}</td><td>${b.maintenance}</td><td>${b.inTransit}</td>
+          ${live ? '' : `<td>${b.onHand}</td><td>${b.inUse}</td><td>${b.reserved}</td><td>${b.maintenance}</td><td>${b.inTransit}</td>`}
           <td><b>${b.available}</b></td>
-          <td>${b.reserveLevel}</td>
-          <td>${b.transferable}</td>
+          ${live ? '' : `<td>${b.reserveLevel}</td><td>${b.transferable}</td>`}
           <td><span class="badge ${b.status}">${escapeHtml(b.status)}</span>${b.reason ? ` <span class="muted">${escapeHtml(b.reason)}</span>` : ''}</td>
         </tr>`;
       }).join('');
@@ -62,15 +63,16 @@ export function readiness(el) {
         <div class="card">
           <table>
             <thead><tr>
-              <th scope="col">Item</th><th scope="col">Unit</th><th scope="col">On hand</th><th scope="col">In use</th>
-              <th scope="col">Reserved</th><th scope="col">Maintenance</th><th scope="col">In transit</th>
-              <th scope="col">Available now</th><th scope="col">Reserve level</th><th scope="col">Can share</th><th scope="col">Status</th>
+              <th scope="col">Item</th><th scope="col">Unit</th>
+              ${live ? '' : '<th scope="col">On hand</th><th scope="col">In use</th><th scope="col">Reserved</th><th scope="col">Maintenance</th><th scope="col">In transit</th>'}
+              <th scope="col">Available now</th>
+              ${live ? '' : '<th scope="col">Reserve level</th><th scope="col">Can share</th>'}
+              <th scope="col">Status</th>
             </tr></thead>
-            <tbody>${rows || '<tr><td colspan="11" class="muted">No equipment loaded.</td></tr>'}</tbody>
+            <tbody>${rows || `<tr><td colspan="${live ? 4 : 11}" class="muted">No equipment loaded.</td></tr>`}</tbody>
           </table>
         </div>
-        <p class="muted">Available now = on hand − in use − reserved − maintenance − in transit.
-          Can share = available now − reserve level, the stock a unit can hand over without going below what it needs for its own patients.</p>
+        ${live ? '<p class="muted">Supabase provides available stock and inventory status. The allocation queue applies the source unit’s configured reserve.</p>' : '<p class="muted">Demo stock shows how commitments and reserves affect availability.</p>'}
       </div>`);
 
     el.querySelector('#readiness-unit')?.addEventListener('change', e => { unitFilter = e.target.value; draw(); });

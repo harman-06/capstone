@@ -49,7 +49,7 @@ function renderOtherUnits(item) {
     const b = stockBreakdown(i);
     return `
     <div class="row">
-      <span>${unitLabel(i)}: <b>${b.available}</b> available of ${b.onHand} on hand${b.reason ? ` <span class="muted">(${escapeHtml(b.reason)})</span>` : ''}</span>
+      <span>${unitLabel(i)}: <b>${b.available}</b> available${b.onHand == null ? '' : ` of ${b.onHand} on hand`}${b.reason ? ` <span class="muted">(${escapeHtml(b.reason)})</span>` : ''}</span>
       <span class="badge ${b.status}">${escapeHtml(b.status)}</span>
     </div>`;
   }).join('');
@@ -129,7 +129,7 @@ function openTransferModal(item, el, activity) {
     bodyHtml: `
       <label>Take from
         <select name="source">
-          ${sources.map(s => { const b = stockBreakdown(s); return `<option value="${escapeHtml(s.id)}">${unitLabel(s)}: ${b.available} available · ${b.transferable} can be shared safely</option>`; }).join('')}
+          ${sources.map(s => { const b = stockBreakdown(s); return `<option value="${escapeHtml(s.id)}">${unitLabel(s)}: ${b.available} available${b.transferable == null ? '' : ` · ${b.transferable} can be shared safely`}</option>`; }).join('')}
         </select>
       </label>
       <label>Quantity <input name="quantity" type="number" min="1" ${isConfigured() ? 'max="1"' : ''} value="1" required></label>

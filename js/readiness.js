@@ -34,6 +34,12 @@ function explainOut({ onHand, inUse, reserved, maintenance, inTransit, qcHold })
 
 // The full picture for one inventory row.
 export function stockBreakdown(row, now = Date.now()) {
+  if (row.source === 'supabase') {
+    const available = n(row.qty);
+    const status = available === 0 ? 'out' : row.status === 'low' ? 'low' : 'available';
+    const reason = status === 'out' ? 'None available' : status === 'low' ? 'Low available stock' : '';
+    return { available, status, reason };
+  }
   const onHand = n(row.qty);
   const inUse = n(row.inUse), reserved = n(row.reserved), maintenance = n(row.maintenance), inTransit = n(row.inTransit);
   const reserveLevel = n(row.reserveThreshold ?? defaultReserve(row));
@@ -69,8 +75,8 @@ export function transferPreview(source, destination, quantity, { allowReserve = 
     destination: { unit: destination.unit, before: snap(d), after: snap(d2) } };
 }
 
-export const LEVEL_LABEL = { ready: 'Ready', 'at-risk': 'At risk', 'not-ready': 'Not ready', 'no-data': 'No data' };
-export const LEVEL_BADGE = { ready: 'available', 'at-risk': 'low', 'not-ready': 'out', 'no-data': 'low' };
+export const LEVEL_LABEL = { ready: 'Ready', 'at-risk': 'At risk', 'not-ready': 'Not ready', 'no-data': 'No data', incomplete: 'Incomplete data' };
+export const LEVEL_BADGE = { ready: 'available', 'at-risk': 'low', 'not-ready': 'out', 'no-data': 'low', incomplete: 'low' };
 
 // Care readiness of one unit, judged on its critical equipment.
 //   not-ready: a critical item has nothing available
@@ -80,18 +86,18 @@ export function unitReadiness(rows, unit) {
   const items = rows
     .filter(r => r.unit === unit && CRITICAL_EQUIPMENT.includes(r.name))
     .map(r => ({ row: r, ...stockBreakdown(r) }));
+  const missing = CRITICAL_EQUIPMENT.filter(name => !items.some(item => item.row.name === name));
   const issues = items.filter(i => i.status !== 'available').map(i => `${i.row.name}: ${i.reason}`);
+  if (missing.length) issues.push('Missing stock records: ' + missing.join(', '));
   const level = !items.length ? 'no-data'
     : items.some(i => i.status === 'out') ? 'not-ready'
+    : missing.length ? 'incomplete'
     : items.some(i => i.status === 'low') ? 'at-risk' : 'ready';
   return { unit, level, issues, items };
 }
 
 // ---------------------------------------------------------------------------
-// Realistic demo stock, keyed "Unit|Item name". Overlaid onto the loaded rows.
-// In demo mode (no database) it also sets qty. With the live database it keeps
-// the real qty and only fits the breakdown inside it.
-// ---------------------------------------------------------------------------
+// Synthetic stock used by the offline demo.
 const DEMO_STOCK = {
   'Cardiology|Defibrillator':      { qty: 3,  inUse: 1, reserved: 0, maintenance: 0, inTransit: 0, reserveThreshold: 1 },
   'Cardiology|Infusion Pump':      { qty: 12, inUse: 7, reserved: 1, maintenance: 1, inTransit: 0, reserveThreshold: 3 },
@@ -118,22 +124,11 @@ const DEMO_STOCK = {
   'Oncology|Stretcher':            { qty: 2,  inUse: 0, reserved: 0, maintenance: 1, inTransit: 0, reserveThreshold: 1 },
 };
 
-// Returns the rows with the demo breakdown applied and a status that reflects
-// availability (not just quantity). Rows with no demo entry are left alone.
-export function applyReadinessDemo(rows, { overrideQty = false } = {}) {
+export function applyReadinessDemo(rows) {
   return rows.map(row => {
     const demo = DEMO_STOCK[`${row.unit}|${row.name}`];
-    if (!demo) return row;
-    const { qty, ...rest } = demo;
-    const merged = { ...row, ...rest };
-    if (overrideQty) merged.qty = qty;
-    else {
-      let room = n(row.qty);                       // fit the breakdown inside the real qty
-      for (const key of ['inTransit', 'maintenance', 'reserved', 'inUse']) {
-        merged[key] = Math.min(n(rest[key]), room);
-        room -= merged[key];
-      }
-    }
+    if (!demo || row.source === 'supabase') return row;
+    const merged = { ...row, ...demo };
     merged.status = stockBreakdown(merged).status;
     return merged;
   });
