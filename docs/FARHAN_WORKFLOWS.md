@@ -4,6 +4,14 @@
 
 Read [PROJECT_GUIDE.md](PROJECT_GUIDE.md) for the beginner explanation, before/after comparison, blockers, ordered ownership handover, troubleshooting and proposed improvements beyond this contract.
 
+## Equipment need and transfer lifecycle
+
+Apply the equipment transfer lifecycle migration after the existing allocation and workspace migrations. The Inventory request form uses the signed-in account's active home department, offers same-hospital sources, and saves an operational reason and required-by time. The allocation queue shows the saved request immediately. A separate source coordinator reviews priority and can confirm or adjust the deadline before the existing allocation policy reserves an asset.
+
+In Requests and approvals, an operations or charge nurse account scoped to the source can select **Dispatch** after reservation. This records dispatch and starts transit in one transaction. An operations or charge nurse account scoped to the destination can select **Confirm receipt** once it arrives. The same transaction records receipt and completion, releases the reservation, and moves the available asset to the destination. Use **Refresh transfers** to pick up changes made in another session. Expand **Transfer timeline** for the recorded stages.
+
+For review, use an isolated database and synthetic staff accounts. Run npm test for the integrated suite, and npm run test:concurrency against the disposable PostgreSQL database described in tests/README.md. Verify the source and destination actions in separate sessions and check the destination quantity after receipt. Publish the branch for review before the team's Sunday deployment.
+
 ## What this contribution implements
 
 Sprint 2 and allocation extension: hospital equipment demand enters an actor-bound queue. The existing request screens enqueue when Supabase is configured. A different source-policy approver verifies priority; the coordinator configures a retained-stock floor and uses Allocate next. The database ranks eligible requests and atomically creates/reserves a transfer. Requests and transfers reload from the database. Approval does not claim physical movement.

@@ -66,3 +66,28 @@ test('allocation retries reuse an operation ID after an uncertain save',async()=
  await api.allocateNext('source','category');
  assert.notEqual(operations[1],operations[2]);
 });
+
+test('equipment needs retain their operation ID after an uncertain save and movement sends no actor',async()=>{
+ const calls=[];
+ let lost=true;
+ globalThis.fetch=async(url,options)=>{
+  if(url.includes('/auth/v1/token'))return loginResponse();
+  if(url.includes('/rpc/'))calls.push({url,body:JSON.parse(options.body),authorization:options.headers.Authorization});
+  if(url.endsWith('/nh_api_submit_equipment_need') && lost){lost=false;throw Error('Response lost');}
+  return {ok:true,status:200,json:async()=>null};
+ };
+ await api.signIn('staff@example.test','test-only');
+ const need=()=>api.submitEquipmentNeed('EQ-source-category','Synthetic equipment shortage','2030-01-02T12:00:00.000Z');
+ await assert.rejects(need(),/Response lost/);
+ await need();
+ await api.moveTransfer('transfer-id','dispatch');
+ await api.moveTransfer('transfer-id','receive');
+ assert.deepEqual(calls[0].body,calls[1].body);
+ assert.equal(calls[1].body.p_needed_by,'2030-01-02T12:00:00.000Z');
+ assert.deepEqual(calls.slice(2).map(call=>call.body),[
+  {p_transfer_id:'transfer-id',p_action:'dispatch'},
+  {p_transfer_id:'transfer-id',p_action:'receive'}
+ ]);
+ assert.ok(calls.every(call=>call.authorization==='Bearer session-token'));
+ await api.signOut();
+});

@@ -1,5 +1,6 @@
+import { openEquipmentNeed } from './equipment-need.js';
 import { renderAllocationQueue } from './allocation.js';
-import { isConfigured, requestEquipment, fetchTransfers, decideTransfer } from '../api.js';
+import { isConfigured, fetchTransfers, decideTransfer, moveTransfer } from '../api.js';
 import { reloadEquipment } from '../data.js';
 // STEP 5: placeholder pages with the deep links already wired (?patient=, ?unit=, ?tab=&item=).
 import { ROLES, session, applyPermissions } from '../roles.js';
@@ -231,7 +232,7 @@ export function inventory(el, { query }) {
   const rows = getInventory().filter(i => i.type === tab).map(i => `<tr data-inventory-row data-name="${escapeHtml(i.name.toLowerCase())}" data-unit="${escapeHtml(i.unit)}" class="${i.id === query.item ? 'hl' : ''}">
     <td><a href="#/inventory/${escapeHtml(i.id)}">${i.name}</a>${i.requiresApproval ? ' <span class="approval-marker" tabindex="0">⚠<span class="approval-tooltip">Requires a doctor\'s approval to administer.</span></span>' : ''}</td>
     <td>${i.unit}${i.unitNo ? ` <span class="muted">(${i.unitNo})</span>` : ''}</td><td>${i.qty}</td><td><span class="badge ${i.status}">${i.status}</span></td>
-    <td>${i.unit !== myUnit() ? `<button data-cap="transfers.request" data-request-item="${escapeHtml(i.id)}">Request</button>` : ''}</td></tr>`).join('');
+    <td>${(isConfigured() && i.type === 'equipment') || i.unit !== myUnit() ? `<button data-cap="transfers.request" data-request-item="${escapeHtml(i.id)}">Request</button>` : ''}</td></tr>`).join('');
   const units = [...new Set(getInventory().filter(i => i.type === tab).map(i => i.unit))].sort();
   // SPRINT 2: BGM quality-check panel. Only users with the equipment.qc
   // capability (charge nurse) see it; applyPermissions removes it for others.
@@ -282,13 +283,7 @@ export function inventory(el, { query }) {
     button.addEventListener('click', async () => {
       const item = getInventory().find(i => i.id === button.dataset.requestItem);
       if (isConfigured()) {
-        if (!item) return;
-        button.disabled = true;
-        try {
-          await requestEquipment(item.id);
-          location.hash = '#/requests';
-        } catch (error) { toast(error.message, { error: true }); }
-        finally { button.disabled = false; }
+        if (item?.type === 'equipment') await openEquipmentNeed(item, el, button);
         return;
       }
       if (item) addRequestLogEntry({
@@ -317,10 +312,12 @@ export async function requests(el) {
       log = (await fetchTransfers()).map(r => ({...r, createdAt: new Date(r.createdAt)}));
       if ((!el.isConnected && el.isConnected !== undefined) || globalThis.location?.hash !== renderedRoute) return;
     } catch (error) {
+      if (el.isConnected === false || globalThis.location?.hash !== renderedRoute) return;
       el.innerHTML = page('Requests and approvals', `<p role="alert">${escapeHtml(error.message)}</p><a href="#/inventory">Back to Inventory</a>`);
       return;
     }
   } else log = getRequestsForMe();   // SPRINT 2: unit clerks only see their own unit's requests
+  const stageLabels = {requested: 'Request', reviewed: 'Priority review', allocated: 'Allocate', reserved: 'Reserve', dispatched: 'Dispatch', in_transit: 'In transit', received: 'Receive', completed: 'Complete'};
   const badgeClass = s => /completed|approved/.test(s) ? 'available' : s === 'rejected' ? 'out' : 'low';
   const rows = log.map(r => `<tr>
     <td>${r.createdAt.toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td>
@@ -329,19 +326,40 @@ export async function requests(el) {
     <td>${escapeHtml(r.sourceUnit) || '—'}</td>
     <td>${escapeHtml(r.patientName) || '—'}</td>
     <td>${escapeHtml(r.requestedBy)}</td>
-    <td><span class="badge ${badgeClass(r.status)}">${escapeHtml(r.status)}</span>${r.decidedBy ? ` <span class="muted">by ${escapeHtml(r.decidedBy)}</span>` : ''}</td>
-    <td>${canDecideTransfer(r) ? `<button type="button" data-accept="${escapeHtml(r.id)}" ${r.persisted ? 'disabled title="Use the allocation queue for new requests"' : ''}>${r.persisted ? 'Approve through queue' : 'Accept demo'}</button> <button type="button" data-reject="${escapeHtml(r.id)}">Reject</button>` : ''}</td>
-  </tr>`).join('');
+    <td><span class="badge ${badgeClass(r.status)}">${escapeHtml(stageLabels[r.status] ?? r.status)}</span>${r.decidedBy ? ` <span class="muted">by ${escapeHtml(r.decidedBy)}</span>` : ''}</td>
+    <td>${r.canDispatch ? `<button type="button" data-dispatch="${escapeHtml(r.id)}">Dispatch</button>` : ''}${r.canReceive ? `<button type="button" data-receive="${escapeHtml(r.id)}">Confirm receipt</button>` : ''}${canDecideTransfer(r) ? `<button type="button" data-accept="${escapeHtml(r.id)}" ${r.persisted ? 'disabled title="Use the allocation queue for new requests"' : ''}>${r.persisted ? 'Approve through queue' : 'Accept demo'}</button> <button type="button" data-reject="${escapeHtml(r.id)}">Reject</button>` : ''}</td>
+  </tr>${r.timeline?.length ? `<tr><td colspan="8"><details><summary>Transfer timeline · ${escapeHtml(r.sourceUnit)} → ${escapeHtml(r.requestingUnit)}</summary><ol>${r.timeline.map(event => `<li>${escapeHtml(stageLabels[event.stage] ?? event.stage)} · ${escapeHtml(new Date(event.at).toLocaleString())}</li>`).join('')}</ol></details></td></tr>` : ''}`).join('');
   el.innerHTML = page('Requests and approvals', `
-    ${isConfigured() ? '<section class="card" id="allocation-queue"></section><h2>Transfer history</h2>' : ''}
-    <p class="muted">${isConfigured() ? 'Saved equipment requests. Approval reserves an asset; it does not move equipment between units. Account permissions come from the database.' : 'Demo requests reset on reload.'}</p>
+    ${isConfigured() ? '<section class="card" id="allocation-queue"></section><h2>Transfer history</h2><button type="button" data-transfer-refresh>Refresh transfers</button>' : ''}
+    <p class="muted">${isConfigured() ? 'Saved transfers. The source unit dispatches reserved equipment. The destination unit confirms receipt to complete the transfer and update inventory.' : 'Demo requests reset on reload.'}</p>
     <div class="card">
       ${log.length ? `<table><thead><tr><th>When</th><th>Type</th><th>Item</th><th>From unit</th><th>Patient</th><th>Requested by</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table>`
         : '<p class="muted">No equipment requests to show. Use Request on an Inventory item.</p>'}
     </div>
     <p><a href="#/inventory">← Back to Inventory</a></p>`);
 
-  if (isConfigured()) await renderAllocationQueue(el.querySelector('#allocation-queue'));
+  async function refreshAfterMovement() {
+    const refreshed = await reloadEquipment().catch(() => false);
+    if (globalThis.location?.hash !== renderedRoute || el.isConnected === false) return;
+    await requests(el);
+    if (refreshed === false) toast('The inventory could not be refreshed.', { error: true });
+  }
+  const refreshButton = el.querySelector('[data-transfer-refresh]');
+  if (refreshButton) refreshButton.onclick = refreshAfterMovement;
+  if (isConfigured()) await renderAllocationQueue(el.querySelector('#allocation-queue'), refreshAfterMovement);
+  if (globalThis.location?.hash !== renderedRoute || el.isConnected === false) return;
+
+  async function move(button, id, action) {
+    if (button.disabled) return;
+    button.disabled = true;
+    try {
+      await moveTransfer(id, action);
+      await refreshAfterMovement();
+    } catch (error) { toast(error.message, { error: true }); }
+    finally { button.disabled = false; }
+  }
+  el.querySelectorAll('[data-dispatch]').forEach(button => button.onclick = () => move(button, button.dataset.dispatch, 'dispatch'));
+  el.querySelectorAll('[data-receive]').forEach(button => button.onclick = () => move(button, button.dataset.receive, 'receive'));
 
   async function decide(button, approve) {
     button.disabled = true;
