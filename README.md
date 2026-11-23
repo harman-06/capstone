@@ -11,6 +11,13 @@ Nexora Health is a capstone prototype for hospital equipment readiness, internal
 
 See the [Sprint 3 release and verification guide](docs/SPRINT_3_RELEASE.md) for role-specific demo steps, database checks and current prototype limits. Patient, medicine and appointment examples are synthetic.
 
+## Team handoff and My Visit
+
+The Sprint 3 release is live. My Visit is deployed for synthetic appointments and requires a dedicated test identity with an assigned visit. The hosted demo currently has no assigned patient visits.
+
+- [Project journey, team contributions and walkthrough](docs/CAPSTONE_HANDOFF.md)
+- [Patient demo provisioning and privacy](docs/PATIENT_DATA_HANDLING.md)
+
 ## Develop and test
 
 Run `npm ci` and `npm test`. Run `npm run test:concurrency` against a [fresh disposable PostgreSQL database](tests/README.md) to exercise independent concurrent sessions. Serve the root with a local static HTTP server, for example `python -m http.server 3000`. The app has no build step.

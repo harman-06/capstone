@@ -1,5 +1,7 @@
 # Synthetic patient demo and account handling
 
+The My Visit frontend and migration are deployed. The 23 November 2026 check found no hosted synthetic visit assignments.
+
 ## What the proof of concept stores
 
 My Visit shows one fictional appointment per dedicated demo patient: a display name, appointment time, clinic, and preparation checklist. The visit is linked to the Supabase Auth account UUID. Its database record includes an expiry date. No real patient identifiers, contact details, charts, health numbers, diagnoses, uploads or messages belong in this demonstration.

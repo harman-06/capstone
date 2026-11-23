@@ -1,5 +1,7 @@
 # Account roles and supplier workflow — 1 November 2026
 
+The dated notes below describe the November 1 release. The [current handoff](CAPSTONE_HANDOFF.md) documents later changes to inventory access, dispatch and receipt.
+
 ## What changed and why
 The IT administrator now has an account-monitoring workspace. The demo coordinator now covers Cardiology as well as Emergency, allowing review of the demo nurse’s Cardiology enquiries. Previously the unit scope prevented that review. Enquiries remain hidden from suppliers until independently approved and sent to that supplier.
 

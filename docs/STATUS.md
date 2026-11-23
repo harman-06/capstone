@@ -4,6 +4,8 @@
 
 > Allocation upgrade: [Equipment allocation MVP](ALLOCATION.md) supersedes the earlier direct-request/approve browser flow on this branch. Requests now enter an independently reviewed queue; source reserve configuration and Allocate next create the reserved transfer. See that guide for the exact priority/fairness policy, API contract, migration and verification limits.
 
+See the [23 November capstone handoff](CAPSTONE_HANDOFF.md) for the published Sprint 3 and My Visit releases.
+
 ## Allocation extension — verified 30 October
 
 Both timestamped allocation migrations are applied. The queue, reviewed priority, equal-unit sharing, source reserve, idempotent saves and atomic reservation are implemented on the PR branch. Local tests passed, and GitHub Actions run 41137469424 passed real PostgreSQL 17 concurrent-session checks. Hosted queue/supplier assertions passed and rolled back: nine original assets, zero test transfers/enquiries/queued requests. Follow-up advisors found no unindexed foreign keys on the new allocation tables.

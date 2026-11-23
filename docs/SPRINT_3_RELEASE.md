@@ -1,5 +1,7 @@
 # Sprint 3 release and verification
 
+See the [capstone handoff](CAPSTONE_HANDOFF.md) for team credits and the latest demo status.
+
 ## Demo checklist
 
 | Area | Verify | Expected result |
@@ -16,6 +18,10 @@ Use synthetic operational reasons and test accounts. Shared demo accounts should
 Run `npm test` for isolated authorization and regression coverage and `npm run test:concurrency` against disposable PostgreSQL for independent sessions. The Sprint 3 suite checks anonymous denial, hospital boundary isolation, least-privilege stock access, patient-profile self visibility, supplier organization isolation and field redaction, independent authorization, idempotency, and unavailable direct writes. The transfer suite checks dispatch and receipt permissions, invalid transitions and exact stock movement. The browser policy restricts scripts to local assets and network connections to the site and Supabase.
 
 For production verification, compare GitHub Pages’ published commit with `main`, list Supabase migrations, check advisor changes, and use a synthetic account to open Requests, Readiness, Inventory and Supply enquiries. Check that UI inventory counts match the Data API. Avoid entering real clinical information. The historical project and status documents record earlier milestones.
+
+## My Visit deployment
+
+The protected synthetic visit workspace is deployed. The hosted project has no assigned patient visits yet. Follow the [provisioning and data-handling guide](PATIENT_DATA_HANDLING.md) before showing it live.
 
 ## Prototype limits
 
