@@ -8,6 +8,8 @@ test('content stays hidden on failed login and hides immediately during sign-out
   const element = () => ({ hidden: false, textContent: '', disabled: false, listeners: {}, addEventListener(name, fn) { this.listeners[name] = fn; } });
   for (const id of ['database-controls', 'database-status', 'database-signin', 'database-signout', 'database-refresh', 'database-auth-message', 'signin-heading', 'signin-intro']) elements.set(id, element());
   const form = elements.get('database-signin');
+  const submit = { disabled: true };
+  form.querySelector = () => submit;
   form.elements = { email: { value: 'staff@example.test' }, password: { value: 'test-only-password' } };
   const content = [element(), element()];
   const buttons = [elements.get('database-signout'), elements.get('database-refresh')];
@@ -22,6 +24,7 @@ test('content stays hidden on failed login and hides immediately during sign-out
     return { ok: true, json: async () => url.includes('frontend_units_v') ? [{ id: 'unit' }] : [] };
   };
   mountDatabaseControls(() => {});
+  assert.equal(submit.disabled, false);
   assert.ok(content.every(el => el.hidden));
   await form.listeners.submit({ preventDefault() {} });
   assert.ok(content.every(el => el.hidden));

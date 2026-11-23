@@ -48,6 +48,7 @@ export function mountDatabaseControls(refresh) {
       message.textContent = '';
     });
   });
+  form.querySelector('button[type="submit"]').disabled = false;
   logout.addEventListener('click', () => run(async () => {
     const signingOut = signOut(); syncVisibility(); await signingOut; message.textContent = 'Signed out';
   }));

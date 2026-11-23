@@ -60,10 +60,10 @@
   <h1 id="signin-heading">Welcome back</h1>
   <p id="signin-intro">Sign in to coordinate equipment and supply requests.</p>
   <p id="database-status" role="status">Sign in to continue.</p>
-  <form id="database-signin">
+  <form id="database-signin" method="post">
     <label>Staff email <input name="email" type="email" autocomplete="username" required></label>
     <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
-    <button type="submit">Sign in to workspace <span aria-hidden="true">→</span></button>
+    <button type="submit" disabled>Sign in to workspace <span aria-hidden="true">→</span></button>
   </form>
   <button id="database-signout" hidden>Sign out</button>
   <button id="database-refresh" hidden>Refresh equipment</button>
