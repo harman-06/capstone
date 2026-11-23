@@ -44,11 +44,8 @@ export async function reloadEquipment() {
   try {
     const [inventory, units] = await Promise.all([fetchInventory(), fetchUnits()]);
     if (!units.length) throw new Error('No units returned. Your account may not be provisioned, or demo data is missing.');
-    db.inventory = [...inventory, ...db.inventory];
+    db.inventory = [...inventory.map(row => ({ ...row, source: 'supabase' })), ...db.inventory];
     db.units = units;
-    // SPRINT 3: demo in use / reserved / maintenance / in transit numbers, fitted inside the
-    // real quantities, until the database has those columns. Real quantities are never changed.
-    db.inventory = applyReadinessDemo(db.inventory);
     source = 'Live Supabase equipment · medicine/patients remain demo data';
   } catch (error) {
     source = `Database equipment unavailable: ${error.message}`;
@@ -267,7 +264,7 @@ function addSprint2Equipment() {
       ...row,
       ...(row.qcRequired ? { lastQualityCheck: checkedHoursAgo == null ? null : now - checkedHoursAgo * 3600000 } : {}),
     }));
-  db.inventory = applyReadinessDemo([...db.inventory, ...rows], { overrideQty: true });
+  db.inventory = applyReadinessDemo([...db.inventory, ...rows]);
 }
 
 // All items that need quality checks (the BGMs).
