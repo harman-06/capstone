@@ -1,4 +1,4 @@
-import { fetchEquipmentSources, submitEquipmentNeed } from '../api.js';
+import { fetchEquipmentSources, submitEquipmentNeed, submitSupplyEnquiry } from '../api.js';
 import { openModal } from '../modal.js';
 import { toast } from '../toast.js';
 
@@ -13,14 +13,15 @@ export async function openEquipmentNeed(item, host, button) {
     const category = item.id.slice(-36);
     const {destination, sources} = await fetchEquipmentSources(category);
     if (!active()) return;
-    if (!sources.length) throw new Error('No internal source units are configured for this equipment.');
+    const shortage = !sources.some(source => (source.transferable ?? source.quantity) > 0);
     const options = sources.map(source => `<option value="${escapeHtml(source.id)}" ${source.id === item.id ? 'selected' : ''}>${escapeHtml(source.unit)} · ${escapeHtml(source.quantity)} available</option>`).join('');
     openModal({
       title: `Request ${escapeHtml(item.name)}`,
-      submitLabel: 'Submit equipment request',
+      submitLabel: 'Save request',
       bodyHtml: `
         <p>Destination <strong>${escapeHtml(destination)}</strong>. Each request is for one reusable asset. A source with zero available can queue the request.</p>
-        <label>Source unit<select name="source" required>${options}</select></label>
+        <label>Source<select name="source" required>${shortage ? ' <option value="supplier">Ask a supplier</option>' : ''}${options}</select></label>
+        ${shortage ? '<p>No internal stock can be transferred now. A coordinator must review a supplier enquiry before sending it.</p>' : ''}
         <label>Required by (local time)<input type="datetime-local" name="neededBy" required></label>
         <label>Operational reason (omit patient details)<textarea name="reason" maxlength="2000" required></textarea></label>`,
       async onSubmit(form) {
@@ -29,8 +30,10 @@ export async function openEquipmentNeed(item, host, button) {
         if (!Number.isFinite(due.getTime()) || !reason) {
           throw new Error('Enter a required-by time and operational reason.');
         }
-        await submitEquipmentNeed(form.source.value, reason, due.toISOString());
-        if (active()) location.hash = '#/requests';
+        const supplier = form.source.value === 'supplier';
+        if (supplier) await submitSupplyEnquiry(category, 1, reason, due.toISOString());
+        else await submitEquipmentNeed(form.source.value, reason, due.toISOString());
+        if (active()) location.hash = supplier ? '#/supplies' : '#/requests';
       }
     });
   } catch (error) {

@@ -47,9 +47,9 @@ export function readiness(el) {
         return `<tr>
           <td><a href="#/inventory/${escapeHtml(i.id)}">${escapeHtml(i.name)}</a></td>
           <td>${escapeHtml(i.unit)}</td>
-          ${live ? '' : `<td>${b.onHand}</td><td>${b.inUse}</td><td>${b.reserved}</td><td>${b.maintenance}</td><td>${b.inTransit}</td>`}
+          ${[b.onHand,b.inUse,b.reserved,b.maintenance,b.inTransit,b.unavailable].map(value=>`<td>${value ?? '—'}</td>`).join('')}
           <td><b>${b.available}</b></td>
-          ${live ? '' : `<td>${b.reserveLevel}</td><td>${b.transferable}</td>`}
+          <td>${b.reserveLevel ?? '—'}</td><td>${b.transferable ?? '—'}</td>
           <td><span class="badge ${b.status}">${escapeHtml(b.status)}</span>${b.reason ? ` <span class="muted">${escapeHtml(b.reason)}</span>` : ''}</td>
         </tr>`;
       }).join('');
@@ -64,15 +64,15 @@ export function readiness(el) {
           <table>
             <thead><tr>
               <th scope="col">Item</th><th scope="col">Unit</th>
-              ${live ? '' : '<th scope="col">On hand</th><th scope="col">In use</th><th scope="col">Reserved</th><th scope="col">Maintenance</th><th scope="col">In transit</th>'}
+              <th scope="col">On hand</th><th scope="col">In use</th><th scope="col">Reserved</th><th scope="col">Maintenance</th><th scope="col">In transit</th><th scope="col">Unavailable</th>
               <th scope="col">Available now</th>
-              ${live ? '' : '<th scope="col">Reserve level</th><th scope="col">Can share</th>'}
+              <th scope="col">Reserve level</th><th scope="col">Can share</th>
               <th scope="col">Status</th>
             </tr></thead>
-            <tbody>${rows || `<tr><td colspan="${live ? 4 : 11}" class="muted">No equipment loaded.</td></tr>`}</tbody>
+            <tbody>${rows || `<tr><td colspan="12" class="muted">No equipment loaded.</td></tr>`}</tbody>
           </table>
         </div>
-        ${live ? '<p class="muted">Supabase provides available stock and inventory status. The allocation queue applies the source unit’s configured reserve.</p>' : '<p class="muted">Demo stock shows how commitments and reserves affect availability.</p>'}
+        ${live ? '<p class="muted">Stock counts come from Supabase. A dash means no source reserve has been configured for that item.</p>' : '<p class="muted">Demo stock shows how commitments and reserves affect availability.</p>'}
       </div>`);
 
     el.querySelector('#readiness-unit')?.addEventListener('change', e => { unitFilter = e.target.value; draw(); });

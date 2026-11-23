@@ -38,7 +38,12 @@ export function stockBreakdown(row, now = Date.now()) {
     const available = n(row.qty);
     const status = available === 0 ? 'out' : row.status === 'low' ? 'low' : 'available';
     const reason = status === 'out' ? 'None available' : status === 'low' ? 'Low available stock' : '';
-    return { available, status, reason };
+    return {
+      available, status, reason,
+      onHand: row.on_hand, inUse: row.in_use, reserved: row.reserved,
+      maintenance: row.maintenance, inTransit: row.in_transit, unavailable: row.unavailable,
+      reserveLevel: row.reserve_level, transferable: row.transferable
+    };
   }
   const onHand = n(row.qty);
   const inUse = n(row.inUse), reserved = n(row.reserved), maintenance = n(row.maintenance), inTransit = n(row.inTransit);

@@ -93,7 +93,7 @@ async function rest(path) {
   return rows;
 }
 const rpc = (name, body = {}) => databaseRequest(`rpc/${name}`, body);
-export const fetchInventory = () => rest('frontend_equipment_inventory_v?select=id,name,type,unit,qty,status&order=unit.asc,name.asc');
+export const fetchInventory = () => rest('frontend_equipment_inventory_v?select=id,name,type,unit,qty,status,on_hand,in_use,reserved,maintenance,in_transit,unavailable,reserve_level,transferable&order=unit.asc,name.asc');
 export const fetchUnits = () => rest('frontend_units_v?select=id,number,name,floor&order=floor.asc,name.asc');
 export const fetchHospitalContext = () => rpc('nh_api_hospital_context');
 export const fetchEquipmentSources = categoryId => rpc('nh_api_equipment_sources', {p_category_id: categoryId});
@@ -132,6 +132,10 @@ export const fetchSupplyEnquiries = () => rpc('nh_api_list_supply_enquiries');
 export const createSupplyEnquiry = (categoryId, quantity, reason = null) => rpc('nh_api_create_supply_enquiry', {
   p_category_id: categoryId, p_quantity: quantity, p_reason: reason
 });
+export const submitSupplyEnquiry = (category, quantity, reason, neededBy) => idempotentRpc(
+  'nh_api_submit_supply_enquiry', JSON.stringify(['supply',category,quantity,reason,neededBy]), {
+    p_category_id:category,p_quantity:quantity,p_reason:reason,p_needed_by:neededBy
+  });
 export const sendSupplyEnquiry = (enquiryId, supplierId) => rpc('nh_api_send_supply_enquiry', {
   p_enquiry_id: enquiryId, p_supplier_id: supplierId
 });

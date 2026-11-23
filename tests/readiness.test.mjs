@@ -6,7 +6,8 @@ test('Supabase availability is used directly and demo breakdowns stay offline', 
   const live = { source: 'supabase', type: 'equipment', unit: 'Emergency', name: 'Ventilator', qty: 2, status: 'available' };
   const [row] = applyReadinessDemo([live]);
   assert.deepEqual(row, live);
-  assert.deepEqual(stockBreakdown(row), { available: 2, status: 'available', reason: '' });
+  assert.equal(stockBreakdown(row).available, 2);
+  assert.equal(stockBreakdown(row).transferable, undefined);
   const [demo] = applyReadinessDemo([{ ...live, source: undefined }]);
   assert.equal(stockBreakdown(demo).available, 1);
 });

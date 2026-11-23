@@ -1,5 +1,7 @@
 # Nexora Health — contribution, readiness and practical next steps
 
+> Current Sprint 3 release steps and evidence are in the [release guide](SPRINT_3_RELEASE.md). The dated notes below document earlier milestones.
+
 > Allocation upgrade: [Equipment allocation MVP](ALLOCATION.md) supersedes the earlier direct-request/approve browser flow on this branch. Requests now enter an independently reviewed queue; source reserve configuration and Allocate next create the reserved transfer. See that guide for the exact priority/fairness policy, API contract, migration and verification limits.
 
 Updated: 30 October 2026. Audience: teammates, presenters and developers.
