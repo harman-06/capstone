@@ -82,11 +82,11 @@ test('navigation matches the account type and keeps icon-only labels', async () 
   assert.equal(session.role, 'patient');
   assert.equal(session.patientId, 'p1');
   assert.deepEqual(ws.workspace.roles, []);
-  renderNav('/dashboard');
-  for (const label of ['Dashboard', 'Appointments', 'My Health']) assert.ok(sidebar.innerHTML.includes(label), label);
-  for (const label of ['Inventory', 'Patients', 'Supply enquiries']) assert.ok(!sidebar.innerHTML.includes(label), `patient must not see ${label}`);
+  renderNav('/my-health');
+  assert.ok(sidebar.innerHTML.includes('My Visit'));
+  for (const label of ['Dashboard', 'Appointments', 'Inventory', 'Patients', 'Supply enquiries']) assert.ok(!sidebar.innerHTML.includes(label), `patient must not see ${label}`);
   assert.match(sidebar.innerHTML, /class="nav-label"/);
-  assert.match(sidebar.innerHTML, /title="My Health"/);
+  assert.match(sidebar.innerHTML, /title="My Visit"/);
 
   workspaceReply = { kind: 'staff', name: 'Eli Brown', unit: 'Cardiology', roles: ['nurse'] };
   await ws.loadWorkspace();

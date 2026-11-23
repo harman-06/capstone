@@ -16,6 +16,7 @@ import { startRouter } from './router.js';
 import { renderNav } from './nav.js';
 import { units } from './pages/units.js';
 import { inventoryItem } from './pages/inventory-item.js';
+import { myVisit } from './pages/my-visit.js';
 import { readiness } from './pages/readiness.js';   // SPRINT 3: resource and care-readiness view
 import * as pg from './pages/other.js';
 
@@ -42,7 +43,7 @@ const routes = [
 
 // Which pages each kind of account may open. Anything else goes back to the dashboard.
 const STAFF_PATHS = ['/dashboard', '/appointments', '/patients', '/inventory', '/units', '/readiness', '/requests', '/supplies', '/account', '/settings'];
-const PATIENT_PATHS = ['/dashboard', '/appointments', '/my-health', '/account', '/settings'];
+const PATIENT_PATHS = ['/my-health'];
 const SUPPLIER_PATHS = ['/dashboard', '/supplies', '/account', '/settings'];
 // A page also needs its capability from roles.js (can() returns 'deny' hides it).
 const ROUTE_CAPS = { '/appointments': 'appointments.view', '/patients': 'patients.view', '/my-health': 'profile.own', '/inventory': 'inventory.view', '/units': 'inventory.view', '/readiness': 'inventory.view', '/requests': 'requests.view' };
@@ -72,6 +73,10 @@ function onRoute(handler, ctx) {
   app.classList.remove('page-enter'); void app.offsetWidth; app.classList.add('page-enter');
   document.body.classList.add('clock-visible');
   scrollTo(0, 0);
+  if (workspace.kind === 'patient') {
+    if (!allowed(ctx.path)) { location.hash = '#/my-health'; return; }
+    myVisit(app); renderNav(ctx.path); refreshTopbar(); return;
+  }
   if (workspace.roles.includes('admin')) {
     // Administrators only see account monitoring plus their own account and settings.
     if (['/account', '/settings'].includes(ctx.path)) { handler(app, ctx); renderNav(ctx.path); refreshTopbar(); return; }

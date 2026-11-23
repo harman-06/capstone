@@ -18,6 +18,7 @@ Run `npm ci` and `npm test`. Run `npm run test:concurrency` against a [fresh dis
 - [Architecture](docs/ARCHITECTURE.md)
 - [Allocation policy](docs/ALLOCATION.md)
 - [Deployment and migration instructions](docs/DEPLOYMENT_RUNBOOK.md)
+- [Synthetic patient demo and data handling](docs/PATIENT_DATA_HANDLING.md)
 - [Historical project notes](docs/PROJECT_GUIDE.md)
 
 The browser configuration contains the Supabase publishable key. Keep credentials and privileged keys out of the repository. Deploy additive migrations only after isolated testing and before frontend code that depends on them.

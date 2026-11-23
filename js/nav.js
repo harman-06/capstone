@@ -77,7 +77,8 @@ export function renderNav(current) {
   if(workspace?.roles.includes('admin')) { document.getElementById('sidebar').innerHTML=`<span class="nav-caption">IT ADMINISTRATION</span><a href="#/accounts" class="${current.startsWith('/accounts') ? 'active' : ''}" title="Account monitoring">${svg(icons[7])}<span class="nav-label">Account monitoring</span></a>`; renderTabBar('/accounts',[{label:'Accounts',route:'/accounts',icon:icons[7]}]); return; }
   // Pages that exist in the file but are not part of the product navigation.
   const HIDDEN = ['/users', '/help'];
-  const allowed = NAV.filter(n => !HIDDEN.includes(n.route) && (workspace?.kind !== 'supplier' || n.route === '/dashboard') && (!n.cap || can(n.cap) !== 'deny'));
+  const available = NAV.filter(n => !HIDDEN.includes(n.route) && (workspace?.kind !== 'supplier' || n.route === '/dashboard') && (!n.cap || can(n.cap) !== 'deny'));
+  const allowed = workspace?.kind === 'patient' ? [{label:'My Visit',route:'/my-health',icon:icons[1]}] : available;
   if (workspace?.kind !== 'patient') allowed.push({label:'Supply enquiries',route:'/supplies',icon:icons[6]});
   // Each link keeps its text in .nav-label so the collapsed sidebar can show icons only.
   document.getElementById('sidebar').innerHTML = '<span class="nav-caption">WORKSPACE</span>' + allowed

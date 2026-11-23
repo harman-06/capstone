@@ -144,6 +144,7 @@ export const respondSupplyEnquiry = (enquiryId, availability, quantity, delivery
   p_available_quantity: quantity, p_estimated_delivery_date: deliveryDate
 });
 
+export const fetchMyVisit = () => rpc('nh_api_my_visit');
 export const fetchWorkspace = () => rpc('nh_api_workspace');
 
 export const fetchAccounts = () => rpc('nh_api_account_monitor');

@@ -70,8 +70,12 @@ export function refreshTopbar() {
   $('menu-name').textContent = workspace.name ?? '';
   $('menu-role').textContent = roleText();
   $('menu-refresh').hidden = !(workspace.kind === 'staff' && !workspace.roles.includes('admin'));
-  renderBell();
-  updateBadge();
+  const patientDemo = workspace.kind === 'patient';
+  for (const id of ['bell-btn', 'menu-account-link', 'menu-settings-link']) {
+    const item = $(id);
+    if (item) item.hidden = patientDemo;
+  }
+  if (!patientDemo) { renderBell(); updateBadge(); }
 }
 
 function watch(id, callback) {
