@@ -1,7 +1,0 @@
-node_modules/
-.env
-.env.*
-!.env.example
-
-# Supabase CLI local cache
-supabase/.temp/
