@@ -154,3 +154,66 @@ export const fetchMyVisit = () => rpc('nh_api_my_visit');
 export const fetchWorkspace = () => rpc('nh_api_workspace');
 
 export const fetchAccounts = () => rpc('nh_api_account_monitor');
+
+export const demoResetAvailable = () => cfg.demoPasswordReset === true;
+
+async function adminAuth(path, access, body) {
+  const response = await fetch(config() + '/auth/v1/' + path, {
+    method: body === undefined ? 'GET' : 'POST',
+    headers: { apikey: cfg.supabasePublishableKey, Authorization: 'Bearer ' + access,
+      'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+    cache: 'no-store'
+  });
+  if (!response.ok) throw new Error('Authenticator request failed. Check your code or sign in again.');
+  return response.json();
+}
+
+export async function listAdminAuthenticators() {
+  const version = sessionVersion;
+  const user = await adminAuth('user', await token());
+  if (version !== sessionVersion) throw new Error('Session changed. Sign in again.');
+  return (user.factors ?? []).filter(factor => factor.factor_type === 'totp' && factor.status === 'verified');
+}
+
+export async function enrollAdminAuthenticator() {
+  const version = sessionVersion;
+  const factor = await adminAuth('factors', await token(), {
+    factor_type: 'totp', friendly_name: 'Nexora IT administration', issuer: 'Nexora Health'
+  });
+  if (version !== sessionVersion) throw new Error('Session changed. Sign in again.');
+  return factor;
+}
+
+export async function verifyAdminAuthenticator(factorId, code) {
+  const version = sessionVersion;
+  const access = await token();
+  const path = 'factors/' + encodeURIComponent(factorId);
+  const challenge = await adminAuth(path + '/challenge', access, {});
+  if (version !== sessionVersion) throw new Error('Session changed. Sign in again.');
+  const result = await adminAuth(path + '/verify', access, { challenge_id: challenge.id, code });
+  if (version !== sessionVersion) throw new Error('Session changed. Sign in again.');
+  if (!result.access_token || !result.refresh_token || !Number.isFinite(result.expires_in)) {
+    throw new Error('Verification did not return a valid session.');
+  }
+  auth = { token: result.access_token, refresh: result.refresh_token,
+    expires: Date.now() + result.expires_in * 1000 };
+}
+
+export async function resetDemoPassword(target) {
+  const version = sessionVersion;
+  const access = await token();
+  const response = await fetch(config() + '/functions/v1/demo-reset-password', {
+    method: 'POST',
+    headers: { apikey: cfg.supabasePublishableKey, Authorization: 'Bearer ' + access,
+      'Content-Type': 'application/json' },
+    body: JSON.stringify({ target }),
+    cache: 'no-store'
+  });
+  const result = await response.json().catch(() => ({}));
+  if (version !== sessionVersion) throw new Error('Session changed. Sign in again.');
+  if (!response.ok || typeof result.password !== 'string') {
+    throw new Error(result.error || 'The password reset result could not be confirmed.');
+  }
+  return result.password;
+}

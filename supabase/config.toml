@@ -1,0 +1,3 @@
+# The function verifies the user bearer through Supabase Auth before reading claims.
+[functions.demo-reset-password]
+verify_jwt = false
