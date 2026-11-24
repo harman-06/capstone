@@ -98,6 +98,9 @@ export const fetchUnits = () => rest('frontend_units_v?select=id,number,name,flo
 export const fetchHospitalContext = () => rpc('nh_api_hospital_context');
 export const fetchEquipmentSources = categoryId => rpc('nh_api_equipment_sources', {p_category_id: categoryId});
 export const moveTransfer = (transferId, action) => rpc('nh_api_move_transfer', {p_transfer_id: transferId, p_action: action});
+export const verifyTransferAsset = (transferId, action, assetTag) => rpc('nh_api_verify_transfer_asset', {
+  p_transfer_id: transferId, p_action: action, p_asset_tag: assetTag
+});
 export const fetchTransfers = () => rpc('nh_api_list_transfers');
 // Retain the operation key after an uncertain response; clear it only after confirmed success.
 async function idempotentRpc(name, key, body) {

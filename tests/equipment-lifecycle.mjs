@@ -2,11 +2,12 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {PGlite} from '@electric-sql/pglite';
-import {context, install, lifecycleMigrationPath, subjects} from './allocation-fixtures.mjs';
+import {context, install, handoffMigrationPath, subjects} from './allocation-fixtures.mjs';
 
 const db = new PGlite();
 try {
   await install(sql => db.exec(sql));
+  await db.exec(await readFile(new URL('../'+handoffMigrationPath,import.meta.url),'utf8'));
   const query = async sql => (await db.query(sql)).rows;
   const ctx = await context(query);
   async function as(subject, sql, params = [], role = 'authenticated') {
@@ -63,7 +64,10 @@ try {
     SELECT u.user_id,r.role_id,u.home_department_id FROM users u,roles r
     WHERE u.auth_subject=$1 AND r.role_key='chargeNurse'`,[receiveSubject]);
 
-  const move = (who, action, role) => as(who,'SELECT nh_api_move_transfer($1,$2)',[transfer,action],role);
+  const [{asset_tag:tag}] = (await db.query(
+    'SELECT asset_tag FROM transfer_requests JOIN equipment_assets USING(asset_id) WHERE transfer_id=$1',[transfer])).rows;
+  const move = (who, action, role, presentedTag = tag) => as(who,
+    'SELECT nh_api_verify_transfer_asset($1,$2,$3)',[transfer,action,presentedTag],role);
   const history = async who => (await as(who,'SELECT nh_api_list_transfers()')).find(row=>row.id===transfer);
   const stock = async () => (await db.query(
     'SELECT coalesce((SELECT qty FROM frontend_equipment_inventory_v WHERE id=$1),0) AS source, coalesce((SELECT qty FROM frontend_equipment_inventory_v WHERE id=$2),0) AS destination',
@@ -71,6 +75,10 @@ try {
   const reservedStock = await stock();
   assert.equal(reservedStock.source,1);
   assert.equal((await history(subjects.coordinator)).canDispatch,true);
+  assert.equal((await history(subjects.coordinator)).assetTag,tag);
+  assert.equal((await history(subjects.a)).assetTag,null);
+  await assert.rejects(move(subjects.coordinator,'dispatch','authenticated','NX-WRONG-ASSET'),/does not match/);
+  assert.equal((await history(subjects.coordinator)).status,'reserved');
   assert.equal(await history(subjects.b),undefined);
   assert.equal((await history(receiveSubject)).canReceive,false);
   await assert.rejects(move(receiveSubject,'receive'),/in-transit/);
@@ -83,6 +91,9 @@ try {
   assert.deepEqual(await move(subjects.coordinator,'dispatch'),['in_transit']);
   assert.deepEqual(await stock(),reservedStock);
   assert.equal((await history(receiveSubject)).canReceive,true);
+  assert.equal((await history(receiveSubject)).assetTag,tag);
+  await assert.rejects(move(receiveSubject,'receive','authenticated','NX-WRONG-ASSET'),/does not match/);
+  assert.deepEqual(await stock(),reservedStock);
   await assert.rejects(move(subjects.coordinator,'receive'),/cannot perform/);
   await assert.rejects(move(subjects.a,'receive'),/cannot perform/);
   assert.deepEqual(await move(receiveSubject,'receive'),['completed']);
@@ -101,8 +112,10 @@ try {
     ['requested','reviewed','allocated','reserved','dispatched','in_transit','received','completed']);
   assert.ok(completed.timeline.every(event=>Number.isFinite(Date.parse(event.at))));
   assert.equal(completed.status,'completed');
+  assert.equal(completed.assetTag,null);
+  assert.deepEqual(completed.timeline.filter(event=>event.tagVerified).map(event=>event.stage),['dispatched','received']);
   assert.equal((await as(subjects.a,'SELECT nh_api_list_allocation_queue()'))[0].transfer_status,'completed');
-  await db.exec(await readFile(new URL('../'+lifecycleMigrationPath,import.meta.url),'utf8'));
+  await db.exec(await readFile(new URL('../'+handoffMigrationPath,import.meta.url),'utf8'));
   assert.deepEqual((await history(subjects.a)).timeline,completed.timeline);
   console.log('PASS equipment need validation, role scopes, lifecycle ordering, retries, timeline and inventory movement');
 } finally {
