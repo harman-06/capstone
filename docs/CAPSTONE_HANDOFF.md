@@ -25,6 +25,7 @@ Use synthetic records and an approved demo environment. Obtain credentials priva
 
 The Sprint 3 operating release is `d6564a1` and the My Visit deployment is `69d60ab`. Supabase Auth and PostgreSQL run the application’s data access and workflows. GitHub Pages serves the interface. The hosted project is in US East. Keep the capstone synthetic. A healthcare custodian would need a separate privacy and operational review before using real patient information.
 
+- [Equipment tag handoff demo](VERIFIED_HANDOFF.md)
 - [Sprint 3 verification and limits](SPRINT_3_RELEASE.md)
 - [Patient privacy, retention and cleanup](PATIENT_DATA_HANDLING.md)
 - [Alberta OIPC privacy impact assessment guidance](https://oipc.ab.ca/privacy-impact-assessments/)

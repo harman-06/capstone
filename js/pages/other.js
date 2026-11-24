@@ -1,6 +1,6 @@
 import { openEquipmentNeed } from './equipment-need.js';
 import { renderAllocationQueue } from './allocation.js';
-import { isConfigured, fetchTransfers, decideTransfer, moveTransfer } from '../api.js';
+import { isConfigured, fetchTransfers, decideTransfer, verifyTransferAsset } from '../api.js';
 import { reloadEquipment } from '../data.js';
 // STEP 5: placeholder pages with the deep links already wired (?patient=, ?unit=, ?tab=&item=).
 import { ROLES, session, applyPermissions } from '../roles.js';
@@ -318,6 +318,8 @@ export async function requests(el) {
     }
   } else log = getRequestsForMe();   // SPRINT 2: unit clerks only see their own unit's requests
   const stageLabels = {requested: 'Request', reviewed: 'Priority review', allocated: 'Allocate', reserved: 'Reserve', dispatched: 'Dispatch', in_transit: 'In transit', received: 'Receive', completed: 'Complete'};
+  const scannedTag = new URLSearchParams(renderedRoute?.split('?')[1]).get('asset');
+  const scannedTransfer = scannedTag && log.find(r => r.assetTag === scannedTag && (r.canDispatch || r.canReceive));
   const badgeClass = s => /completed|approved/.test(s) ? 'available' : s === 'rejected' ? 'out' : 'low';
   const rows = log.map(r => `<tr>
     <td>${r.createdAt.toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td>
@@ -327,11 +329,16 @@ export async function requests(el) {
     <td>${escapeHtml(r.patientName) || '—'}</td>
     <td>${escapeHtml(r.requestedBy)}</td>
     <td><span class="badge ${badgeClass(r.status)}">${escapeHtml(stageLabels[r.status] ?? r.status)}</span>${r.decidedBy ? ` <span class="muted">by ${escapeHtml(r.decidedBy)}</span>` : ''}</td>
-    <td>${r.canDispatch ? `<button type="button" data-dispatch="${escapeHtml(r.id)}">Dispatch</button>` : ''}${r.canReceive ? `<button type="button" data-receive="${escapeHtml(r.id)}">Confirm receipt</button>` : ''}${canDecideTransfer(r) ? `<button type="button" data-accept="${escapeHtml(r.id)}" ${r.persisted ? 'disabled title="Use the allocation queue for new requests"' : ''}>${r.persisted ? 'Approve through queue' : 'Accept demo'}</button> <button type="button" data-reject="${escapeHtml(r.id)}">Reject</button>` : ''}</td>
-  </tr>${r.timeline?.length ? `<tr><td colspan="8"><details><summary>Transfer timeline · ${escapeHtml(r.sourceUnit)} → ${escapeHtml(r.requestingUnit)}</summary><ol>${r.timeline.map(event => `<li>${escapeHtml(stageLabels[event.stage] ?? event.stage)} · ${escapeHtml(new Date(event.at).toLocaleString())}</li>`).join('')}</ol></details></td></tr>` : ''}`).join('');
+    <td>${r.canDispatch ? `<button type="button" data-dispatch="${escapeHtml(r.id)}">Verify dispatch</button>` : ''}${r.canReceive ? `<button type="button" data-receive="${escapeHtml(r.id)}">Verify receipt</button>` : ''}${canDecideTransfer(r) ? `<button type="button" data-accept="${escapeHtml(r.id)}" ${r.persisted ? 'disabled title="Use the allocation queue for new requests"' : ''}>${r.persisted ? 'Approve through queue' : 'Accept demo'}</button> <button type="button" data-reject="${escapeHtml(r.id)}">Reject</button>` : ''}</td>
+  </tr>${r.timeline?.length ? `<tr><td colspan="8"><details><summary>Transfer timeline · ${escapeHtml(r.sourceUnit)} → ${escapeHtml(r.requestingUnit)}</summary><ol>${r.timeline.map(event => `<li>${escapeHtml(stageLabels[event.stage] ?? event.stage)}${event.tagVerified ? ' · Equipment tag matched' : ''} · ${escapeHtml(new Date(event.at).toLocaleString())}</li>`).join('')}</ol></details></td></tr>` : ''}`).join('');
   el.innerHTML = page('Requests and approvals', `
     ${isConfigured() ? '<section class="card" id="allocation-queue"></section><h2>Transfer history</h2><button type="button" data-transfer-refresh>Refresh transfers</button>' : ''}
     <p class="muted">${isConfigured() ? 'Saved transfers. The source unit dispatches reserved equipment. The destination unit confirms receipt to complete the transfer and update inventory.' : 'Demo requests reset on reload.'}</p>
+    ${scannedTag ? `<div class="card">
+      ${scannedTransfer ? `<p>Equipment tag found. Confirm the ${scannedTransfer.canDispatch ? 'dispatch' : 'receipt'} in your unit.</p>
+        <button type="button" data-verify-scan>Review scanned equipment</button>`
+        : '<p role="status">There is no handoff you can confirm for this tag right now.</p>'}
+    </div>` : ''}
     <div class="card">
       ${log.length ? `<table><thead><tr><th>When</th><th>Type</th><th>Item</th><th>From unit</th><th>Patient</th><th>Requested by</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table>`
         : '<p class="muted">No equipment requests to show. Use Request on an Inventory item.</p>'}
@@ -349,17 +356,31 @@ export async function requests(el) {
   if (isConfigured()) await renderAllocationQueue(el.querySelector('#allocation-queue'), refreshAfterMovement);
   if (globalThis.location?.hash !== renderedRoute || el.isConnected === false) return;
 
-  async function move(button, id, action) {
-    if (button.disabled) return;
-    button.disabled = true;
-    try {
-      await moveTransfer(id, action);
-      await refreshAfterMovement();
-    } catch (error) { toast(error.message, { error: true }); }
-    finally { button.disabled = false; }
+  function openHandoff(record, action, scanned = false) {
+    const actionName = action === 'dispatch' ? 'dispatch' : 'receipt';
+    const unit = action === 'dispatch' ? record.sourceUnit : record.requestingUnit;
+    openModal({
+      title: `Verify ${actionName}`,
+      submitLabel: `Confirm ${actionName}`,
+      bodyHtml: `<p>${escapeHtml(record.item)} · ${escapeHtml(unit)}</p>
+        <label>Equipment tag<input name="assetTag" maxlength="60" required autocomplete="off" autocapitalize="off" spellcheck="false" value="${scanned ? escapeHtml(scannedTag) : ''}"></label>
+        <p class="muted">Scan the sticker with your phone camera or type the code printed on it.</p>`,
+      async onSubmit(form) {
+        await verifyTransferAsset(record.id, action, form.assetTag.value.trim());
+        if (globalThis.location?.hash !== renderedRoute || el.isConnected === false) return;
+        toast(action === 'dispatch' ? 'Dispatch confirmed.' : 'Receipt confirmed. Inventory updated.');
+        await refreshAfterMovement();
+      }
+    });
   }
-  el.querySelectorAll('[data-dispatch]').forEach(button => button.onclick = () => move(button, button.dataset.dispatch, 'dispatch'));
-  el.querySelectorAll('[data-receive]').forEach(button => button.onclick = () => move(button, button.dataset.receive, 'receive'));
+  const scanButton = el.querySelector('[data-verify-scan]');
+  if (scanButton) scanButton.onclick = () => openHandoff(scannedTransfer, scannedTransfer.canDispatch ? 'dispatch' : 'receive', true);
+  el.querySelectorAll('[data-dispatch]').forEach(button => {
+    button.onclick = () => openHandoff(log.find(r => r.id === button.dataset.dispatch), 'dispatch');
+  });
+  el.querySelectorAll('[data-receive]').forEach(button => {
+    button.onclick = () => openHandoff(log.find(r => r.id === button.dataset.receive), 'receive');
+  });
 
   async function decide(button, approve) {
     button.disabled = true;

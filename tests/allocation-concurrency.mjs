@@ -1,7 +1,8 @@
 // Run only against a new disposable PostgreSQL database, never the hosted project.
 import pg from 'pg';
 import assert from 'node:assert/strict';
-import {install,context,subjects} from './allocation-fixtures.mjs';
+import {readFile} from 'node:fs/promises';
+import {install,context,subjects,handoffMigrationPath} from './allocation-fixtures.mjs';
 const url=process.env.NEXORA_TEST_DATABASE_URL;
 if(!url)throw Error('Set NEXORA_TEST_DATABASE_URL to a new disposable nexora_allocation_test database.');
 const parsed=new URL(url);
@@ -11,6 +12,7 @@ try {
  const existing=await pool.query("SELECT count(*)::int AS n FROM pg_tables WHERE schemaname='public'");
  assert.equal(existing.rows[0].n,0,'Concurrency test requires a fresh empty database; it never drops existing tables.');
  await install(sql=>pool.query(sql));
+ await pool.query(await readFile(new URL('../'+handoffMigrationPath,import.meta.url),'utf8'));
  const ctx=await context(async sql=>(await pool.query(sql)).rows);
  async function as(subject,sql,params=[]) {
   const c=await pool.connect();
@@ -55,12 +57,14 @@ try {
   INSERT INTO user_role_assignments(user_id,role_id,scope_location_id)
   SELECT u.user_id,r.role_id,u.home_department_id FROM users u,roles r
   WHERE u.auth_subject=$1 AND r.role_key='chargeNurse'`,[receiver]);
+ const {rows:[{asset_tag:tag}]}=await pool.query('SELECT asset_tag FROM transfer_requests JOIN equipment_assets USING(asset_id) WHERE transfer_id=$1',[transfer]);
  const allMove = (subject, action) => Promise.all(Array.from({length:6},()=>as(subject,
-  'SELECT nh_api_move_transfer($1,$2)',[transfer,action])));
+  'SELECT nh_api_verify_transfer_asset($1,$2,$3)',[transfer,action,tag])));
  assert.ok((await allMove(subjects.coordinator,'dispatch')).every(status=>status==='in_transit'));
  assert.ok((await allMove(receiver,'receive')).every(status=>status==='completed'));
- const events=await pool.query("SELECT event_type FROM transfer_events WHERE transfer_id=$1 ORDER BY event_id",[transfer]);
+ const events=await pool.query("SELECT event_type,note FROM transfer_events WHERE transfer_id=$1 ORDER BY event_id",[transfer]);
  assert.deepEqual(events.rows.map(row=>row.event_type),
   ['requested','approved','reserved','dispatched','in_transit','received','completed']);
+ assert.deepEqual(events.rows.filter(row=>row.note==='equipment_tag_verified').map(row=>row.event_type),['dispatched','received']);
  console.log('PASS real PostgreSQL concurrent request conflicts, replay, reserve floor, allocation, dispatch and receipt');
 } finally {await pool.end();}
