@@ -359,12 +359,23 @@ export async function requests(el) {
   function openHandoff(record, action, scanned = false) {
     const actionName = action === 'dispatch' ? 'dispatch' : 'receipt';
     const unit = action === 'dispatch' ? record.sourceUnit : record.requestingUnit;
+    const demoTag = !scanned && /^NX-(?:DEMO-SCALE-(?:CARD|ER|ONC)-[A-Za-z0-9-]+|PUMP-CARD|VEN-(?:ER|ONC)|DEF-ER)-[0-9]{3}$/.test(record.assetTag ?? '')
+      ? escapeHtml(record.assetTag) : '';
     openModal({
       title: `Verify ${actionName}`,
       submitLabel: `Confirm ${actionName}`,
       bodyHtml: `<p>${escapeHtml(record.item)} · ${escapeHtml(unit)}</p>
+        ${demoTag ? `<label>Assigned demo tag<select name="demoTag">
+          <option value="">Enter tag manually</option>
+          <option value="${demoTag}">${demoTag}</option>
+        </select></label>` : ''}
         <label>Equipment tag<input name="assetTag" maxlength="60" required autocomplete="off" autocapitalize="off" spellcheck="false" value="${scanned ? escapeHtml(scannedTag) : ''}"></label>
-        <p class="muted">Scan the sticker with your phone camera or type the code printed on it.</p>`,
+        <p class="muted">${demoTag ? 'For a walkthrough, select the assigned demo tag. For a physical handoff, scan or type the code on the equipment sticker.' : 'Scan the sticker with your phone camera or type the code printed on it.'}</p>`,
+      onMount(form) {
+        if (!demoTag) return;
+        form.demoTag.onchange = () => { form.assetTag.value = form.demoTag.value; };
+        form.assetTag.oninput = () => { form.demoTag.value = ''; };
+      },
       async onSubmit(form) {
         await verifyTransferAsset(record.id, action, form.assetTag.value.trim());
         if (globalThis.location?.hash !== renderedRoute || el.isConnected === false) return;
