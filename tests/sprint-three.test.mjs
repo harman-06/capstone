@@ -104,5 +104,19 @@ test('Sprint 3 stock and supplier workflows honor database permissions and prese
       WHERE n.nspname='public' AND p.proname LIKE 'nh_api_%'
       AND (p.prosecdef OR has_function_privilege('anon',p.oid,'EXECUTE'))`);
     assert.deepEqual(wrappers,[]);
+    const seed = await readFile(new URL('../database/11_expand_demo_inventory.sql', import.meta.url), 'utf8');
+    await db.exec(seed);
+    const [scaled] = await as(subjects.a,stock,[ctx.source]);
+    assert.equal(scaled.qty,8);
+    assert.equal(scaled.on_hand,12);
+    assert.equal(scaled.transferable,7);
+    assert.deepEqual((await query("SELECT qty FROM frontend_equipment_inventory_v WHERE name='Portable Ultrasound'")).map(r=>r.qty),[0,0,0]);
+    const [moved] = (await db.query(
+      "UPDATE equipment_assets SET current_location_id=(SELECT location_id FROM locations WHERE code='CARD') WHERE asset_tag='NX-DEMO-SCALE-ER-C6-001' RETURNING current_location_id"
+    )).rows;
+    await db.exec(seed);
+    const [afterReplay] = await as(subjects.a,stock,[ctx.source]);
+    assert.equal(afterReplay.qty,7);
+    assert.equal((await query("SELECT current_location_id FROM equipment_assets WHERE asset_tag='NX-DEMO-SCALE-ER-C6-001'"))[0].current_location_id,moved.current_location_id);
   } finally { await db.close(); }
 });

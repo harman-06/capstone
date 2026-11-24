@@ -13,6 +13,10 @@ See the [capstone handoff](CAPSTONE_HANDOFF.md) for team credits and the latest 
 
 Use synthetic operational reasons and test accounts. Shared demo accounts should remain limited to the demonstration environment. Tasks that change inventory or audit records belong in a disposable environment.
 
+## Scaled demo inventory
+
+The additive [synthetic inventory seed](../database/11_expand_demo_inventory.sql) provides three units with a mix of available, in-use, and maintenance equipment. From the baseline seed, Cardiology starts with 12 available infusion pumps and Emergency with 8 available ventilators. Portable Ultrasound stays unavailable in all three units for the supplier path. These counts change as the demo team runs transfers. The seed can be rerun without resetting assets already moved or updating existing reserve policies.
+
 ## Defensive security checks
 
 Run `npm test` for isolated authorization and regression coverage and `npm run test:concurrency` against disposable PostgreSQL for independent sessions. The Sprint 3 suite checks anonymous denial, hospital boundary isolation, least-privilege stock access, patient-profile self visibility, supplier organization isolation and field redaction, independent authorization, idempotency, and unavailable direct writes. The transfer suite checks dispatch and receipt permissions, invalid transitions and exact stock movement. The browser policy restricts scripts to local assets and network connections to the site and Supabase.

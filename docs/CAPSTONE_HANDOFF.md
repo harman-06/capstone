@@ -14,7 +14,7 @@ Release baseline verified on **23 November 2026**. [Open the deployed prototype]
 
 ## Walk through the demo
 
-1. **Readiness.** Sign in with the nurse account and open Readiness. Identify a source unit with available stock and a configured reserve.
+1. **Readiness.** Sign in with the nurse account and open Readiness. Open **Stock details** when you want to show in-use, maintenance, or transit counts. The scaled demo starts with 8 Emergency ventilators available. A source coordinator can set the reserve to 3 to show 5 shareable.
 2. **Internal transfer.** Submit one equipment need with a deadline and synthetic operational reason. In separate sessions, have a coordinator review and allocate it, a source-scoped operator dispatch it, and a destination-scoped operator confirm receipt. Open the timeline and compare source and destination counts. Prepare both operator scopes before attempting the walkthrough.
 3. **Supplier fallback.** Open an item with no transferable internal stock and choose **Ask a supplier**. Have an independent coordinator send the enquiry. Supplier A can return full, partial or unavailable stock with an ETA where applicable. Supplier B cannot see Supplier A’s enquiry. The hospital page refreshes about every 15 seconds while active.
 4. **My Visit glimpse.** The app and schema are deployed. As of this check no hosted fictional visits are provisioned. Use the live screen only after a trusted administrator creates dedicated patient demo accounts and assigns fictional visits. [Patient setup and handling](PATIENT_DATA_HANDLING.md)

@@ -44,13 +44,17 @@ export function readiness(el) {
       .sort((a, b) => a.unit.localeCompare(b.unit) || a.name.localeCompare(b.name))
       .map(i => {
         const b = stockBreakdown(i);
+        const details = [
+          ['On hand', b.onHand], ['In use', b.inUse], ['Reserved', b.reserved],
+          ['Maintenance', b.maintenance], ['In transit', b.inTransit], ['Unavailable', b.unavailable]
+        ];
         return `<tr>
           <td><a href="#/inventory/${escapeHtml(i.id)}">${escapeHtml(i.name)}</a></td>
           <td>${escapeHtml(i.unit)}</td>
-          ${[b.onHand,b.inUse,b.reserved,b.maintenance,b.inTransit,b.unavailable].map(value=>`<td>${value ?? '—'}</td>`).join('')}
           <td><b>${b.available}</b></td>
-          <td>${b.reserveLevel ?? '—'}</td><td>${b.transferable ?? '—'}</td>
+          <td>${b.reserveLevel ?? 'Not set'}</td><td>${b.transferable ?? '—'}</td>
           <td><span class="badge ${b.status}">${escapeHtml(b.status)}</span>${b.reason ? ` <span class="muted">${escapeHtml(b.reason)}</span>` : ''}</td>
+          <td><details><summary>View counts</summary><dl class="readiness-counts">${details.map(([label, value]) => `<div><dt>${label}</dt><dd>${value ?? '—'}</dd></div>`).join('')}</dl></details></td>
         </tr>`;
       }).join('');
 
@@ -58,21 +62,20 @@ export function readiness(el) {
       <div data-cap="inventory.view">
         <p class="muted">A unit is judged on its critical equipment: defibrillators, ventilators, patient monitors and infusion pumps.</p>
         ${cards}
-        <h2>Stock breakdown</h2>
+        <h2>Equipment availability</h2>
         <p><label>Unit <select id="readiness-unit"><option value="">All units</option>${units.map(u => `<option value="${escapeHtml(u)}" ${u === unitFilter ? 'selected' : ''}>${escapeHtml(u)}</option>`).join('')}</select></label></p>
         <div class="card">
           <table>
             <thead><tr>
               <th scope="col">Item</th><th scope="col">Unit</th>
-              <th scope="col">On hand</th><th scope="col">In use</th><th scope="col">Reserved</th><th scope="col">Maintenance</th><th scope="col">In transit</th><th scope="col">Unavailable</th>
               <th scope="col">Available now</th>
               <th scope="col">Reserve level</th><th scope="col">Can share</th>
-              <th scope="col">Status</th>
+              <th scope="col">Status</th><th scope="col">Stock details</th>
             </tr></thead>
-            <tbody>${rows || `<tr><td colspan="12" class="muted">No equipment loaded.</td></tr>`}</tbody>
+            <tbody>${rows || `<tr><td colspan="7" class="muted">No equipment loaded.</td></tr>`}</tbody>
           </table>
         </div>
-        ${live ? '<p class="muted">Stock counts come from Supabase. A dash means no source reserve has been configured for that item.</p>' : '<p class="muted">Demo stock shows how commitments and reserves affect availability.</p>'}
+        ${live ? '<p class="muted">Can share is the available stock above the source reserve. Set a reserve in Requests before allocating.</p>' : '<p class="muted">Open Stock details to see counts by equipment state.</p>'}
       </div>`);
 
     el.querySelector('#readiness-unit')?.addEventListener('change', e => { unitFilter = e.target.value; draw(); });
