@@ -3,6 +3,7 @@ export const migrationPath='supabase/migrations/20261030221131_fair_equipment_al
 export const indexMigrationPath='supabase/migrations/20261030222202_allocation_lookup_indexes.sql';
 export const lifecycleMigrationPath='supabase/migrations/20261120040826_equipment_transfer_lifecycle.sql';
 export const handoffMigrationPath='supabase/migrations/20261124013143_verified_equipment_handoff.sql';
+export const requestHistoryMigrationPath='supabase/migrations/20261124013738_scoped_request_history.sql';
 export const subjects={a:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',b:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',coordinator:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',outsider:'dddddddd-dddd-4ddd-8ddd-dddddddddddd'};
 export async function install(exec) {
  await exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE SCHEMA auth;

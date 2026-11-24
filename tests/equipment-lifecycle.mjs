@@ -2,12 +2,13 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {PGlite} from '@electric-sql/pglite';
-import {context, install, handoffMigrationPath, subjects} from './allocation-fixtures.mjs';
+import {context, install, handoffMigrationPath, requestHistoryMigrationPath, subjects} from './allocation-fixtures.mjs';
 
 const db = new PGlite();
 try {
   await install(sql => db.exec(sql));
   await db.exec(await readFile(new URL('../'+handoffMigrationPath,import.meta.url),'utf8'));
+  await db.exec(await readFile(new URL('../'+requestHistoryMigrationPath,import.meta.url),'utf8'));
   const query = async sql => (await db.query(sql)).rows;
   const ctx = await context(query);
   async function as(subject, sql, params = [], role = 'authenticated') {
@@ -42,6 +43,12 @@ try {
   await assert.rejects(as(subjects.a,submit,[ctx.source,crypto.randomUUID(),input[2],due]),/already has a queued/);
   await assert.rejects(as(subjects.b,submit,[ctx.source,crypto.randomUUID(),'  ',due]),/operational reason/);
   await assert.rejects(as(subjects.b,submit,[ctx.source,crypto.randomUUID(),input[2],'2000-01-01']),/future/);
+  const requestHistory = async (who, role) => (await as(who,
+    "SELECT nh_api_request_history('equipment',$1)",[need],role))[0];
+  assert.deepEqual((await requestHistory(subjects.a)).map(e=>e.stage),['requested']);
+  assert.deepEqual(await requestHistory(subjects.coordinator),await requestHistory(subjects.a));
+  await assert.rejects(requestHistory(subjects.b),/unavailable for this account/);
+  await assert.rejects(requestHistory('','anon'),/permission denied/);
   const [queued] = await as(subjects.a,'SELECT nh_api_list_allocation_queue()');
   assert.equal(queued.status,'queued');
   assert.equal(queued.reason,input[2]);
@@ -108,6 +115,9 @@ try {
   assert.equal(asset.asset_status,'available');
   assert.ok(asset.released_at);
   const completed = await history(subjects.a);
+  assert.deepEqual(await requestHistory(subjects.a),completed.timeline);
+  assert.deepEqual(await requestHistory(receiveSubject),completed.timeline);
+  assert.ok((await requestHistory(receiveSubject)).every(e=>!Object.keys(e).some(key=>/note|reason|actor/i.test(key))));
   assert.deepEqual(completed.timeline.map(event=>event.stage),
     ['requested','reviewed','allocated','reserved','dispatched','in_transit','received','completed']);
   assert.ok(completed.timeline.every(event=>Number.isFinite(Date.parse(event.at))));
