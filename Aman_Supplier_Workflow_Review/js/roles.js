@@ -1,0 +1,71 @@
+// STEP 2: roles and permissions. New role = one new entry below.
+// where each role is defined
+const CLINICAL = ['appointments.view','patients.view','inventory.view','inventory.update','requests.view','notes.add'];
+const STAFF_DASH = ['greeting','schedule','notifications','patients'];
+
+export const ROLES = {
+  supplier: {label:'Supplier', scope:'none', caps:[], dashboard:[]},
+  staff: {label:'Staff', scope:'unit', caps:['inventory.view'], dashboard:[]},
+  doctor:      { label:'Doctor', user:'Dr. Smith', scope:'all', dashboard:STAFF_DASH,
+                 caps:[...CLINICAL,'patients.viewSensitive','meds.prescribe','transfers.request','transfers.approve'] },
+  chargeNurse: { label:'Charge nurse', user:'Nadia Ali', scope:'unit', dashboard:STAFF_DASH,
+                 caps:[...CLINICAL,'transfers.request','transfers.approve','equipment.qc'],
+                 approval:['meds.administerControlled'], masked:['patients.viewSensitive'] },
+  nurse:       { label:'Nurse', user:'Eli Brown', scope:'unit', dashboard:STAFF_DASH,
+                 caps:[...CLINICAL,'transfers.request'],
+                 approval:['meds.administerControlled'], masked:['patients.viewSensitive'] },
+  // SPRINT 2: Unit clerk. Manages equipment for ONE unit (set by `unit` below).
+  // No patient or appointment access. Can request equipment from other units
+  // and accept/reject requests that name their own unit as the source.
+  // The "own unit only" rule is enforced on the Requests page, not here.
+  // (The user name is a placeholder; change it to match your demo data.)
+  unitClerk:   { label:'Unit clerk (Emergency)', user:'Maya Chen', unit:'Emergency', scope:'unit', dashboard:['greeting','notifications'],
+                 caps:['inventory.view','inventory.update','requests.view','transfers.request','transfers.approve'] },
+  // Second clerk so you can show that each unit only sees its own requests.
+  // (The user name is a placeholder; change it to match your demo data.)
+  unitClerkCard: { label:'Unit clerk (Cardiology)', user:'Omar Patel', unit:'Cardiology', scope:'unit', dashboard:['greeting','notifications'],
+                 caps:['inventory.view','inventory.update','requests.view','transfers.request','transfers.approve'] },
+  admin:       { label:'IT admin', user:'Sam Lee', scope:'none', dashboard:['greeting','notifications'],
+                 caps:['inventory.view','users.manage'] },
+  patient:     { label:'Patient', user:'Ron Simpson', scope:'self', patientId:'p1',
+                 dashboard:['greeting','schedule','notifications','myHealth'],
+                 caps:['appointments.view','profile.own','patients.viewSensitive'] },
+};
+// scope: all | unit | self | none  (resident, student, aide: add entries the same way)
+
+// patientId is set for patient accounts (from the account's workspace); other roles leave it null.
+export const session = { role:'doctor', unit:'Cardiology', patientId:null };
+
+// Returns 'allow' | 'approval' | 'mask' | 'deny'
+export function can(cap) {
+  const r = ROLES[session.role];
+  if (r.caps.includes(cap)) return 'allow';
+  if (r.approval?.includes(cap)) return 'approval';
+  if (r.masked?.includes(cap)) return 'mask';
+  return 'deny';
+}
+
+// Asks the interface to show the approval dialog (see topbar.js). Kept as an event so
+// this file does not depend on any page or popup code.
+export function requestApproval(cap) {
+  if (typeof document === 'undefined' || typeof CustomEvent === 'undefined') return;
+  document.dispatchEvent(new CustomEvent('nexora:approval-needed', { detail: { cap } }));
+}
+
+// Runs on every rendered page. Elements declare what they need: <button data-cap="transfers.request">
+export function applyPermissions(root = document) {
+  root.querySelectorAll('[data-cap]').forEach(el => {
+    const result = can(el.dataset.cap);
+    if (result === 'deny') {
+      if (el.dataset.fallback === 'text') {          // links become plain text
+        const s = document.createElement('span');
+        s.className = el.className; s.textContent = el.textContent; el.replaceWith(s);
+      } else el.remove();
+    } else if (result === 'approval') {
+      el.classList.add('locked');
+      el.addEventListener('click', e => { e.preventDefault(); e.stopImmediatePropagation(); requestApproval(el.dataset.cap); }, true);
+    } else if (result === 'mask') {
+      el.classList.add('masked'); el.textContent = '••••••';
+    }
+  });
+}

@@ -1,0 +1,4 @@
+[{"id":"a1","patientId":"p1","patientName":"Rohan Khan","unit":"Cardiology","when":"Today 10:30","today":true,"type":"Follow-up"},
+{"id":"a2","patientId":"p2","patientName":"Mia Lee","unit":"Cardiology","when":"Today 11:15","today":true,"type":"Consult"},
+{"id":"a3","patientId":"p3","patientName":"Tomas Ortiz","unit":"Oncology","when":"Today 13:00","today":true,"type":"Pre-op"},
+{"id":"a4","patientId":"p1","patientName":"Rohan Khan","unit":"Cardiology","when":"Fri 10:30","today":false,"type":"Blood work"}]

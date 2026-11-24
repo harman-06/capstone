@@ -1,0 +1,60 @@
+process.on('uncaughtException',e=>{console.error(e.message,e.code,e.position,e.where || '');process.exit(1);});
+import {PGlite} from '@electric-sql/pglite';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {install,context,subjects,migrationPath} from './allocation-fixtures.mjs';
+const db=new PGlite();
+await install(sql=>db.exec(sql));
+const query=async sql=>(await db.query(sql)).rows;
+const value=async sql=>Object.values((await query(sql))[0])[0];
+const ctx=await context(query);
+async function as(subject,sql,role='authenticated') {
+ await db.exec(`BEGIN; SET LOCAL ROLE ${role}; SELECT set_config('request.jwt.claim.sub','${subject}',true);`);
+ try {const result=await value(sql);await db.exec('COMMIT');return result;}catch(e){await db.exec('ROLLBACK');throw e;}
+}
+const enqueue=(who,key,reason='Synthetic demand')=>as(subjects[who],`SELECT nh_api_enqueue_equipment('${ctx.source}','${key}','${reason}')`);
+const keyA=crypto.randomUUID(), keyB=crypto.randomUUID();
+const a=await enqueue('a',keyA),b=await enqueue('b',keyB);
+assert.equal(await enqueue('a',keyA),a);
+await assert.rejects(enqueue('a',keyA,'Changed payload'),/different request/);
+await assert.rejects(enqueue('a',crypto.randomUUID()),/already has a queued/);
+await assert.rejects(as(subjects.outsider,`SELECT nh_api_list_allocation_queue()`),/profile/);
+await assert.rejects(as(subjects.a,'SELECT * FROM nh_allocation_requests'),/permission denied/);
+await assert.rejects(as('',`SELECT nh_api_list_allocation_queue()`,'anon'),/permission denied/);
+await assert.rejects(as(subjects.a,`SELECT nh_api_review_allocation('${a}',3,NULL,'Self priority escalation')`),/different authorized/);
+await assert.rejects(as(subjects.a,`SELECT nh_api_allocate_next('${ctx.source_id}','${ctx.category_id}','${crypto.randomUUID()}')`),/coordinator scope/);
+assert.equal((await as(subjects.coordinator,`SELECT nh_api_allocate_next('${ctx.source_id}','${ctx.category_id}','${crypto.randomUUID()}')`)).outcome,'configuration_required');
+await as(subjects.coordinator,`SELECT nh_api_configure_allocation('${ctx.source_id}','${ctx.category_id}',1)`);
+assert.equal((await as(subjects.coordinator,`SELECT nh_api_allocate_next('${ctx.source_id}','${ctx.category_id}','${crypto.randomUUID()}')`)).outcome,'no_eligible_requests');
+await as(subjects.coordinator,`SELECT nh_api_review_allocation('${a}',1,NULL,'Routine request verified')`);
+await db.exec(`INSERT INTO user_role_assignments(user_id,role_id,scope_location_id) SELECT u.user_id,r.role_id,l.location_id FROM users u,roles r,locations l WHERE u.auth_subject='${subjects.a}' AND r.role_key='chargeNurse' AND l.code='ER'`);
+await assert.rejects(as(subjects.a,`SELECT nh_api_review_allocation('${a}',3,NULL,'Self priority escalation')`),/different authorized/);
+await assert.rejects(as(subjects.a,`SELECT nh_api_allocate_next('${ctx.source_id}','${ctx.category_id}','${crypto.randomUUID()}')`),/next request is yours/);
+await as(subjects.coordinator,`SELECT nh_api_review_allocation('${b}',3,NULL,'Urgency independently verified')`);
+const op=crypto.randomUUID();
+const first=await as(subjects.coordinator,`SELECT nh_api_allocate_next('${ctx.source_id}','${ctx.category_id}','${op}')`);
+assert.equal(first.request_id,b); assert.equal(first.outcome,'allocated');
+assert.deepEqual(await as(subjects.coordinator,`SELECT nh_api_allocate_next('${ctx.source_id}','${ctx.category_id}','${op}')`),first);
+assert.equal(await value('SELECT count(*)::int FROM asset_reservations WHERE released_at IS NULL'),1);
+assert.equal((await as(subjects.coordinator,`SELECT nh_api_allocate_next('${ctx.source_id}','${ctx.category_id}','${crypto.randomUUID()}')`)).outcome,'waiting_for_stock');
+await as(subjects.coordinator,`SELECT nh_api_configure_allocation('${ctx.source_id}','${ctx.category_id}',0)`);
+// Unit B has already received one; a new equal-priority B request must wait behind unserved A.
+const b2=await enqueue('b',crypto.randomUUID());
+await as(subjects.coordinator,`SELECT nh_api_review_allocation('${b2}',1,NULL,'Routine request verified')`);
+const next=await as(subjects.coordinator,`SELECT nh_api_allocate_next('${ctx.source_id}','${ctx.category_id}','${crypto.randomUUID()}')`);
+assert.equal(next.request_id,a);
+assert.equal((await as(subjects.coordinator,`SELECT nh_api_allocate_next('${ctx.source_id}','${ctx.category_id}','${crypto.randomUUID()}')`)).outcome,'waiting_for_stock');
+await assert.rejects(as(subjects.a,`SELECT nh_api_cancel_allocation('${b2}')`),/Only the requester/);
+await as(subjects.b,`SELECT nh_api_cancel_allocation('${b2}')`);
+await as(subjects.b,`SELECT nh_api_cancel_allocation('${b2}')`);
+// Zero stock still permits a waiting request; old browser RPCs cannot bypass the queue.
+await enqueue('b',crypto.randomUUID());
+await assert.rejects(as(subjects.a,`SELECT nh_api_request_equipment('${ctx.source}')`),/allocation queue/);
+await assert.rejects(as(subjects.coordinator,`SELECT nh_api_decide_transfer('${first.transfer_id}',true)`),/allocation queue/);
+assert.equal(await value(`SELECT count(*)::int FROM nh_allocation_events WHERE action='allocated'`),2);
+assert.equal(await value(`SELECT count(*)::int FROM equipment_assets a WHERE a.asset_status='reserved' AND nh_department_for_location(a.current_location_id)='${ctx.source_id}'`),2);
+await db.exec(await readFile(new URL('../'+migrationPath,import.meta.url),'utf8'));
+assert.equal(await value('SELECT count(*)::int FROM nh_allocation_requests'),4);
+assert.equal(await value(`SELECT count(*)::int FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname LIKE 'nh_api_%' AND p.prosecdef`),0);
+console.log('PASS allocation authorization, verified priority, fair share, reserve floor, zero-stock wait, replay, cancellation, migration reapply and legacy bypass denial');
+await db.close();
