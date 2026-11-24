@@ -101,6 +101,9 @@ export const moveTransfer = (transferId, action) => rpc('nh_api_move_transfer', 
 export const verifyTransferAsset = (transferId, action, assetTag) => rpc('nh_api_verify_transfer_asset', {
   p_transfer_id: transferId, p_action: action, p_asset_tag: assetTag
 });
+export const fetchRequestHistory = (kind, requestId) => rpc('nh_api_request_history', {
+  p_kind: kind, p_request_id: requestId
+});
 export const fetchTransfers = () => rpc('nh_api_list_transfers');
 // Retain the operation key after an uncertain response; clear it only after confirmed success.
 async function idempotentRpc(name, key, body) {

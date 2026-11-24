@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
-import { install, context, subjects } from './allocation-fixtures.mjs';
+import { install, context, requestHistoryMigrationPath, subjects } from './allocation-fixtures.mjs';
 
 test('Sprint 3 stock and supplier workflows honor database permissions and preserve audit state', async () => {
   const db = new PGlite();
@@ -13,6 +13,7 @@ test('Sprint 3 stock and supplier workflows honor database permissions and prese
     const migration = await readFile(new URL('../supabase/migrations/20261123151007_sprint_three_supplier_and_inventory.sql', import.meta.url), 'utf8');
     await db.exec(migration);
     await db.exec(migration);
+    await db.exec(await readFile(new URL('../'+requestHistoryMigrationPath,import.meta.url),'utf8'));
     async function as(subject, sql, values = [], role = 'authenticated') {
       await db.exec('BEGIN');
       try {
@@ -78,6 +79,10 @@ test('Sprint 3 stock and supplier workflows honor database permissions and prese
     const [{enquiry}] = await as(subjects.a,submit,request);
     assert.deepEqual(await as(subjects.a,submit,request),[{enquiry}]);
     await assert.rejects(as(subjects.a,submit,[request[0],1,...request.slice(2)]), /already used/);
+    const enquiryHistory = async subject => (await as(subject,
+      "SELECT nh_api_request_history('supplier',$1) AS history",[enquiry]))[0].history;
+    assert.deepEqual((await enquiryHistory(subjects.a)).map(e=>e.stage),['requested']);
+    await assert.rejects(enquiryHistory(supplier),/unavailable for this account/);
     const list = 'SELECT nh_api_list_supply_enquiries() AS item';
     assert.deepEqual(await as(supplier,list),[]);
     await assert.rejects(as(subjects.a,'SELECT nh_api_send_supply_enquiry($1,$2)',[enquiry,supplierId]), /cannot authorize/);
@@ -94,6 +99,11 @@ test('Sprint 3 stock and supplier workflows honor database permissions and prese
     await assert.rejects(as(other,"SELECT nh_api_respond_supply_enquiry($1,'partial',1)",[enquiry]),/cannot respond/);
     await as(supplier,"SELECT nh_api_respond_supply_enquiry($1,'partial',1,current_date+1)",[enquiry]);
     const [hospital] = await as(subjects.a,list);
+    const supplierHistory = await enquiryHistory(supplier);
+    assert.deepEqual(supplierHistory.map(e=>e.stage),['requested','sent','responded']);
+    assert.deepEqual(await enquiryHistory(subjects.a),supplierHistory);
+    assert.ok(supplierHistory.every(e=>Object.keys(e).sort().join(',')==='at,stage'));
+    await assert.rejects(enquiryHistory(other),/unavailable for this account/);
     assert.equal(hospital.item.availability,'partial');
     assert.equal(hospital.item.available_quantity,1);
     assert.deepEqual(await as(subjects.a,stock,[ctx.source]),[stockAfter]);

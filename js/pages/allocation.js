@@ -1,4 +1,5 @@
 import { fetchAllocationQueue, reviewAllocation, configureAllocationPool, allocateNext, cancelAllocation } from '../api.js';
+import { openRequestHistory } from './request-history.js';
 import { openModal } from '../modal.js';
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -30,7 +31,7 @@ export async function renderAllocationQueue(host, onAllocated) {
         <td>${escapeHtml(r.item)}<br>${escapeHtml(r.source_unit)}${r.reason ? `<br>${escapeHtml(r.reason)}` : ''}</td><td>${escapeHtml(r.destination_unit)}</td>
         <td>${escapeHtml(priorityName(r.priority))}${r.reviewed ? '' : ' · awaiting review'}${r.needed_by ? `<br>Required by ${escapeHtml(new Date(r.needed_by).toLocaleString())}` : ''}</td>
         <td>${escapeHtml(r.transfer_status?.replaceAll('_',' ') ?? r.status)}${r.allocation_explanation ? `<br>${escapeHtml(r.allocation_explanation)}` : ''}${r.queue_position ? `<br>Position ${r.queue_position} · ${r.recent_allocations} allocations to unit in 24h` : r.status==='queued' && r.reviewed ? '<br>Eligibility needs recheck' : ''}<br>Requested ${escapeHtml(new Date(r.created_at).toLocaleString())}</td>
-        <td>${r.can_review ? `<button type="button" data-review="${i}">Review priority</button>` : ''}${r.can_cancel ? `<button type="button" data-cancel="${i}">Cancel queued request</button>` : ''}</td></tr>`).join('')}</tbody></table>` : '<p>No visible allocation requests. Use Request in live Inventory; zero-stock requests can wait here.</p>'}
+        <td><button type="button" data-request-history="${i}">History</button> ${r.can_review ? `<button type="button" data-review="${i}">Review priority</button>` : ''}${r.can_cancel ? `<button type="button" data-cancel="${i}">Cancel queued request</button>` : ''}</td></tr>`).join('')}</tbody></table>` : '<p>No visible allocation requests. Use Request in live Inventory; zero-stock requests can wait here.</p>'}
       <p>Queue position can change when verified priorities or stock change. Already reserved assets are not automatically reassigned. Showing up to 200 visible requests; older history requires a future paginated view.</p>`;
     host.querySelector('[data-queue-refresh]').onclick = () => renderAllocationQueue(host, onAllocated);
     const message = text => { const node=host.querySelector('[data-queue-message]'); if(node) node.textContent=text; };
@@ -48,6 +49,8 @@ export async function renderAllocationQueue(host, onAllocated) {
       } catch(error) { message(error.message); }
       finally { button.disabled=false; }
     }
+    host.querySelectorAll('[data-request-history]').forEach(button=>button.onclick=()=>
+      openRequestHistory('equipment',rows[Number(button.dataset.requestHistory)].id));
     host.querySelectorAll('[data-review]').forEach(button=>button.onclick=()=>{
       const r=rows[Number(button.dataset.review)];
       openModal({title:`Review ${escapeHtml(r.item)} request`,submitLabel:'Save reviewed priority',bodyHtml:`
